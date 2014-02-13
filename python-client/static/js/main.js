@@ -22,29 +22,6 @@ function toggleUi(clazz, link) {
   $(link).parent().addClass('active');
 }
 
-function importSource(button) {
-  button = $(button);
-  button.button('loading');
-  var params = $("#readsetImport").serialize();
-  $.post('/api/readsets/import', params)
-      .done(function(res) {
-        showModal('Import success', "Yea! Your import has started. Eventually, you'll get status information. For now, just hang tight!");
-      }).error(function(xhr) {
-        var error = $('<div>').text('That import uri didn\'t work. Are you sure it\'s a public Google Cloud Storage path?');
-        $('<div>', {'class': 'small'}).text('(The api said: ' + xhr.responseText + ')').appendTo(error);
-        showModal('Import failed', error);
-      }).always(function() {
-        button.button('reset');
-      });
-}
-
-function showModal(title, body) {
-  var modal = $('#infoModal');
-  modal.find('.modal-title').text(title);
-  modal.find('.modal-body').html(body);
-  modal.modal('show');
-}
-
 function showError(message) {
   showAlert(message, 'danger');
 }
@@ -57,8 +34,8 @@ function showAlert(message, type) {
   var alert = $('<div class="alert alert-info alert-dismissable"/>')
       .addClass('alert-' + type)
       .text(message).appendTo($("body"));
-  alert.css('margin-left', -1 * alert.width());
   closeButton().attr('data-dismiss', 'alert').appendTo(alert);
+  alert.css('margin-left', -1 * alert.width()/2);
 
   setTimeout(function() {
     alert.alert('close')
@@ -79,9 +56,11 @@ function addReadset(name, id) {
     return;
   }
   showMessage('Loading ' + name);
+  $('#readsetSearch').modal('hide');
 
+  var readsetList = $('#activeReadsets').empty();
   var li = $('<li>', {'id': 'readset-' + id, 'class': 'list-group-item'})
-      .text(name).appendTo($('#activeReadsets'));
+      .text(name).appendTo(readsetList);
   closeButton().appendTo(li).click(function() {
     li.remove();
     removeReadset(name, id);

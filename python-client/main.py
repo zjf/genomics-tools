@@ -66,37 +66,18 @@ class BaseRequestHandler(webapp2.RequestHandler):
     print(response)
     print(content)
 
-    # TODO: Nice errors for other non-200s
     if response.status == 404:
-      raise ApiException('Api not found')
+      raise ApiException('API not found')
     elif response.status == 400:
-      raise ApiException('Api request malformed')
+      raise ApiException('API request malformed')
+    elif response.status != 200:
+      raise ApiException('Something went wrong with the API call!')
 
     content = json.loads(content)
     if 'error' in content:
       raise ApiException(content['error']['message'])
 
     self.response.write(json.dumps(content))
-
-class ReadsetImportHandler(BaseRequestHandler):
-
-  @decorator.oauth_aware
-  def post(self):
-    dataset_id = self.request.get('datasetId')
-    source_uri = self.request.get('sourceUri')
-    
-    body = {
-      'datasetId' : dataset_id,
-      'sourceUris': [source_uri],
-     }
-    self.get_content("readsets/import", body=body)
-
-class GetJobHandler(BaseRequestHandler):
-
-  @decorator.oauth_aware
-  def get(self):
-    job_id = self.request.get('jobId')
-    self.get_content("jobs/%s" % job_id, method='GET')
 
 class ReadsetSearchHandler(BaseRequestHandler):
 
@@ -107,6 +88,7 @@ class ReadsetSearchHandler(BaseRequestHandler):
       # TODO: Do real searching here
       content = [
         {'name': 'PG0001257', 'id': 'CJ_ppJ-WCxD-2oXg667IhDM='},
+        {'name': 'test', 'id': 'test'},
       ]
       self.response.write("%s" % json.dumps(content))
       return
@@ -174,10 +156,8 @@ class MainHandler(webapp2.RequestHandler):
 app = webapp2.WSGIApplication(
     [
      ('/', MainHandler),
-     ('/api/jobs', GetJobHandler),
      ('/api/reads', ReadSearchHandler),
      ('/api/readsets', ReadsetSearchHandler),
-     ('/api/readsets/import', ReadsetImportHandler),
      (decorator.callback_path, decorator.callback_handler()),
     ],
     debug=True)

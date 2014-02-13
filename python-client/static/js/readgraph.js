@@ -583,7 +583,8 @@ var readgraph = new function() {
   };
 
   this.addReadset = function(id, targetData) {
-    readsetIds.push(id);
+    // TODO: Support multiple readsets
+    readsetIds = [id];
     if (readsetIds.length == 1) {
       targets = targetData;
       updateTargets();
