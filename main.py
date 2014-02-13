@@ -62,6 +62,10 @@ class BaseRequestHandler(webapp2.RequestHandler):
       method=method, body=json.dumps(body) if body else None,
       headers={'Content-Type': 'application/json; charset=UTF-8'})
 
+    # TODO: Delete debug code
+    print(response)
+    print(content)
+
     # TODO: Nice errors for other non-200s
     if response.status == 404:
       raise ApiException('Api not found')
@@ -102,7 +106,7 @@ class ReadsetSearchHandler(BaseRequestHandler):
     if not readset_id:
       # TODO: Do real searching here
       content = [
-        {'name': 'DG', 'id': 'CJ_ppJ-WCxD-2oXg667IhDM='},
+        {'name': 'PG0001257', 'id': 'CJ_ppJ-WCxD-2oXg667IhDM='},
       ]
       self.response.write("%s" % json.dumps(content))
       return
