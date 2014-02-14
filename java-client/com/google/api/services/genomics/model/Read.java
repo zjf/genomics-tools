@@ -117,7 +117,7 @@ public final class Read extends com.google.api.client.json.GenericJson {
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private java.util.Map<String, Tag> tags;
+  private java.util.List<Tag> tags;
 
   /**
    * (TLEN) Signed observed template length.
@@ -362,7 +362,7 @@ public final class Read extends com.google.api.client.json.GenericJson {
    * (TAG) Optional fields.
    * @return value or {@code null} for none
    */
-  public java.util.Map<String, Tag> getTags() {
+  public java.util.List<Tag> getTags() {
     return tags;
   }
 
@@ -370,7 +370,7 @@ public final class Read extends com.google.api.client.json.GenericJson {
    * (TAG) Optional fields.
    * @param tags tags or {@code null} for none
    */
-  public Read setTags(java.util.Map<String, Tag> tags) {
+  public Read setTags(java.util.List<Tag> tags) {
     this.tags = tags;
     return this;
   }
