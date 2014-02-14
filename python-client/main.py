@@ -88,37 +88,36 @@ class ReadsetSearchHandler(BaseRequestHandler):
       # TODO: Do real searching here
       content = [
         {'name': 'PG0001257', 'id': 'CJ_ppJ-WCxD-2oXg667IhDM='},
-        {'name': 'test', 'id': 'test'},
       ]
       self.response.write("%s" % json.dumps(content))
       return
 
     # Single readset response
     targets = [
-      {'name': "1", 'targetLength': 249250621},
-      {'name': "2", 'targetLength': 243199373},
-      {'name': "3", 'targetLength': 198022430},
-      {'name': "4", 'targetLength': 191154276},
-      {'name': "5", 'targetLength': 180915260},
-      {'name': "6", 'targetLength': 171115067},
-      {'name': "7", 'targetLength': 159138663},
-      {'name': "8", 'targetLength': 146364022},
-      {'name': "9", 'targetLength': 141213431},
-      {'name': "10", 'targetLength': 135534747},
-      {'name': "11", 'targetLength': 135006516},
-      {'name': "12", 'targetLength': 133851895},
-      {'name': "13", 'targetLength': 115169878},
-      {'name': "14", 'targetLength': 107349540},
-      {'name': "15", 'targetLength': 102531392},
-      {'name': "16", 'targetLength': 90354753},
-      {'name': "17", 'targetLength': 81195210},
-      {'name': "18", 'targetLength': 78077248},
-      {'name': "19", 'targetLength': 59128983},
-      {'name': "20", 'targetLength': 63025520},
-      {'name': "21", 'targetLength': 48129895},
-      {'name': "22", 'targetLength': 51304566},
-      {'name': "X", 'targetLength': 155270560},
-      {'name': "Y", 'targetLength': 59373566},
+      {'name': "chr1", 'sequenceLength': 249250621},
+      {'name': "chr2", 'sequenceLength': 243199373},
+      {'name': "chr3", 'sequenceLength': 198022430},
+      {'name': "chr4", 'sequenceLength': 191154276},
+      {'name': "chr5", 'sequenceLength': 180915260},
+      {'name': "chr6", 'sequenceLength': 171115067},
+      {'name': "chr7", 'sequenceLength': 159138663},
+      {'name': "chr8", 'sequenceLength': 146364022},
+      {'name': "chr9", 'sequenceLength': 141213431},
+      {'name': "chr10", 'sequenceLength': 135534747},
+      {'name': "chr11", 'sequenceLength': 135006516},
+      {'name': "chr12", 'sequenceLength': 133851895},
+      {'name': "chr13", 'sequenceLength': 115169878},
+      {'name': "chr14", 'sequenceLength': 107349540},
+      {'name': "chr15", 'sequenceLength': 102531392},
+      {'name': "chr16", 'sequenceLength': 90354753},
+      {'name': "chr17", 'sequenceLength': 81195210},
+      {'name': "chr18", 'sequenceLength': 78077248},
+      {'name': "chr19", 'sequenceLength': 59128983},
+      {'name': "chr20", 'sequenceLength': 63025520},
+      {'name': "chr21", 'sequenceLength': 48129895},
+      {'name': "chr22", 'sequenceLength': 51304566},
+      {'name': "chrX", 'sequenceLength': 155270560},
+      {'name': "chrY", 'sequenceLength': 59373566},
     ]
     self.response.write("%s" % json.dumps(targets))
 
@@ -130,9 +129,9 @@ class ReadSearchHandler(BaseRequestHandler):
 
     body = {
       'readsetIds': readset_ids,
-      'sequenceName': 'chr' + self.request.get('target'), # TODO: Need to not hardcode this
-      'sequenceStart': max(0, int(self.request.get('targetStart'))),
-      'sequenceEnd': int(self.request.get('targetEnd')),
+      'sequenceName': self.request.get('sequenceName'),
+      'sequenceStart': max(0, int(self.request.get('sequenceStart'))),
+      'sequenceEnd': int(self.request.get('sequenceEnd')),
       'pageToken': self.request.get('pageToken'),
      }
     self.get_content("reads/search", body=body)

@@ -16,12 +16,12 @@ limitations under the License.
 
 
 /* html styles */
-#targets {
+#sequences {
   white-space: nowrap;
   overflow: auto;
 }
 
-#targets .target {
+#sequences .sequence {
   border: 1px solid #e3e3e3;
   border-radius: 4px;
   height: 100px;
@@ -32,26 +32,26 @@ limitations under the License.
   cursor: pointer;
 }
 
-#targets .target:hover {
+#sequences .sequence:hover {
   background-color: #f5f5f5;
 }
 
-#targets .target.active {
+#sequences .sequence.active {
   border-color: #357ebd;
   background-color: #428bca;
   color: white;
 }
 
-#targets .target img {
+#sequences .sequence img {
   max-height: 100%;
   margin-right: .5em;
 }
 
-#targets .target .summary {
+#sequences .sequence .summary {
   color: #999;
 }
 
-#targets .target.active .summary {
+#sequences .sequence.active .summary {
   color: white;
 }
 

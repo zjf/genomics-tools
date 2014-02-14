@@ -34,14 +34,12 @@ var readgraph = new function() {
   var minRange = 0;
 
   var opacity = d3.scale.linear().domain([0, 93]).range([.2, 1]);
-  var radiusScale = d3.scale.linear().range([0, 2 * Math.PI]);
-  var summaryYScale = d3.scale.linear().domain([0, 1]).range([height *.4, height *.5]);
-  var coverageYScale = d3.scale.linear().domain([40, 0]).range([margin*2, height - margin*2]).clamp(true);
+  var unsupportedMessage = null;
 
   // Current state
   var readsetIds = [];
-  var targets = null;
-  var currentTarget = null;
+  var sequences = null;
+  var currentSequence = null;
   var xhrTimeout = null;
 
   // Dom elements
@@ -63,9 +61,9 @@ var readgraph = new function() {
     updateDisplay();
   };
 
-  var moveToTargetPosition = function(position) {
+  var moveTosequencePosition = function(position) {
     position = Math.max(0, position);
-    position = Math.min(currentTarget.targetLength, position);
+    position = Math.min(currentSequence.sequenceLength, position);
 
     var newX = x(position);
     newX = zoom.translate()[0] - newX + width / 2;
@@ -98,9 +96,8 @@ var readgraph = new function() {
         .attr('transform', 'translate(0,' + (height - margin) + ')')
         .attr('class', 'axis');
 
-    // Target coverage
-    svg.append('path').attr('class', 'coverageSummary');
-    svg.append('path').attr('class', 'coverage');
+    // Unsupported message
+    unsupportedMessage = addText('This zoom level is coming soon!', width/2, height/4);
 
     // Hover line
     var hoverline = svg.append("line")
@@ -142,7 +139,7 @@ var readgraph = new function() {
       console.log("switched to zoom: " + newZoom + " and scale " + getScaleLevel());
 
       handleZoom();
-      moveToTargetPosition(middleX);
+      moveTosequencePosition(middleX);
     };
 
     zoom = d3.behavior.zoom().size([width, height]).on("zoom", handleZoom);
@@ -180,7 +177,7 @@ var readgraph = new function() {
       zoom.scale(zoomLevel);
       handleZoom();
     }
-    moveToTargetPosition(position);
+    moveTosequencePosition(position);
   };
 
   var addImage = function(name, width, height, x, y, opt_handler, opt_class) {
@@ -195,10 +192,10 @@ var readgraph = new function() {
     return svg.append('text').text(name).attr('x', x).attr('y', y);
   };
 
-  var selectTarget = function(target) {
-    currentTarget = target;
-    $('.target').removeClass('active');
-    $('#target-' + target.name).addClass('active');
+  var selectSequence = function(sequence) {
+    currentSequence = sequence;
+    $('.sequence').removeClass('active');
+    $('#sequence-' + sequence.name).addClass('active');
     $('#graph').show();
     $('#circleGraph').hide();
     if (!setupRun) {
@@ -206,45 +203,38 @@ var readgraph = new function() {
     }
 
     // Axis and zoom
-    x.domain([0, target.targetLength]);
-    maxZoom = Math.ceil(Math.max(1, target.targetLength / minRange));
+    x.domain([0, sequence.sequenceLength]);
+    maxZoom = Math.ceil(Math.max(1, sequence.sequenceLength / minRange));
     zoomLevelChange = Math.pow(maxZoom, 1/6);
     zoom.x(x).scaleExtent([1, maxZoom]).size([width, height]);
-
-    // Set summary data
-    svg.select('.coverageSummary').datum(getFakeSummary(target));
 
     $('#jumpDiv').show();
     handleZoom();
   };
 
-  var updateTargets = function() {
-    var targetsDiv = $("#targets").empty();
+  var updateSequences = function() {
+    var sequencesDiv = $("#sequences").empty();
 
-    var totalTargetLength = 0;
-    $.each(targets, function(i, target) {
-      var targetDiv = $('<div/>', {'class': 'target', id: 'target-' + target.name}).appendTo(targetsDiv);
-      $('<img>', {'class': 'pull-left', src: '/static/img/chr' + target.name + '.png'}).appendTo(targetDiv);
-      $('<div>', {'class': 'title'}).text("Chromosome " + target.name).appendTo(targetDiv);
-      $('<div>', {'class': 'summary'}).text(xFormat(target.targetLength) + " bases").appendTo(targetDiv);
+    $.each(sequences, function(i, sequence) {
+      var canonicalName = sequence.name;
+      if (sequence.name.indexOf('X') != -1) {
+        canonicalName = 'X';
+      } else if (sequence.name.indexOf('Y') != -1) {
+        canonicalName = 'Y';
+      } else {
+        var number = canonicalName.replace(/\D/g,'');
+        canonicalName = number || canonicalName;
+      }
 
-      targetDiv.click(function() {
-        selectTarget(target);
+      var sequenceDiv = $('<div/>', {'class': 'sequence', id: 'sequence-' + sequence.name}).appendTo(sequencesDiv);
+      $('<img>', {'class': 'pull-left', src: '/static/img/chr' + canonicalName + '.png'}).appendTo(sequenceDiv);
+      $('<div>', {'class': 'title'}).text("Chromosome " + canonicalName).appendTo(sequenceDiv);
+      $('<div>', {'class': 'summary'}).text(xFormat(sequence.sequenceLength) + " bases").appendTo(sequenceDiv);
+
+      sequenceDiv.click(function() {
+        selectSequence(sequence);
       });
-
-      // Circle stats
-      target.radiusStart = totalTargetLength;
-      totalTargetLength += target.targetLength;
-      target.radiusEnd = totalTargetLength;
     });
-  };
-
-  var getFakeSummary = function(target) {
-    var points = [];
-    for (var i = 0; i < target.targetLength / 1000000; i++) {
-      points.push({'sx': i * 1000000, 'sy': Math.random() });
-    }
-    return points;
   };
 
   var updateDisplay = function() {
@@ -254,31 +244,16 @@ var readgraph = new function() {
     var readView = scaleLevel > 3;
     var baseView = scaleLevel > 5;
 
-    var summary = svg.selectAll(".coverageSummary");
-    var coverage = svg.selectAll(".coverage");
     var reads = svg.selectAll(".read");
-    toggleVisibility(summary, summaryView);
-    toggleVisibility(coverage, coverageView);
+    toggleVisibility(unsupportedMessage, summaryView || coverageView);
     toggleVisibility(reads, readView);
 
-    var targetStart = parseInt(x.domain()[0]);
-    var targetEnd = parseInt(x.domain()[1]);
+    var sequenceStart = parseInt(x.domain()[0]);
+    var sequenceEnd = parseInt(x.domain()[1]);
 
-    if (summaryView) {
-      summary.attr('d', d3.svg.line()
-              .x(function(d) { return x(d.sx); })
-              .y(function(d) { return summaryYScale(d.sy); }));
-
-    } else if (coverageView) {
-      queryCoverage(targetStart, targetEnd);
-      if (coverage.datum()) {
-        coverage.attr('d', d3.svg.line()
-            .x(function(d) { return x(d.cx); })
-            .y(function(d) { return coverageYScale(d.cy); }));
-      }
-
-    } else if (readView) {
-      queryReads(targetStart, targetEnd);
+    // TODO: Bring back coverage and summary views
+    if (readView) {
+      queryReads(sequenceStart, sequenceEnd);
 
       reads.selectAll('.outline')
           .attr("points", outlinePoints);
@@ -288,7 +263,7 @@ var readgraph = new function() {
       } else {
         reads.selectAll('.letter')
             .style('display', function(data, i) {
-              if (data.rx < targetStart || data.rx >= targetEnd - 1) {
+              if (data.rx < sequenceStart || data.rx >= sequenceEnd - 1) {
                 return 'none';
               } else {
                 return 'block';
@@ -379,11 +354,11 @@ var readgraph = new function() {
     d3.select(this).classed("selected", false);
   };
 
-  var setCoverage = function(targetStart, targetEnd, reads) {
+  var setCoverage = function(sequenceStart, sequenceEnd, reads) {
     var coverage = [];
     $.each(reads, function(i, read) {
       // TODO: Get this from the api rather than computing ourselves
-      var start = read.position - targetStart;
+      var start = read.position - sequenceStart;
       var end = start + read.alignedSequence.length;
       for (i = start; i < end; i++) {
         coverage[i] = (coverage[i] || 0) + 1;
@@ -391,7 +366,7 @@ var readgraph = new function() {
     });
 
     for (var i = 0; i < coverage.length; i++) {
-      coverage[i] =  {cx: targetStart + i, cy: coverage[i] || 0};
+      coverage[i] =  {cx: sequenceStart + i, cy: coverage[i] || 0};
     }
     svg.select('.coverage').datum(coverage);
     updateDisplay();
@@ -406,7 +381,6 @@ var readgraph = new function() {
   };
 
   var setReads = function(reads) {
-    // TODO: Pair up the reads somehow... Possibly move some logic to python
     var yTracks = [];
     $.each(reads, function(readi, read) {
       // Interpret the cigar
@@ -471,7 +445,7 @@ var readgraph = new function() {
         if (yTracks[i] < read.position) {
           yTracks[i] = read.end;
           setYOrder(read, i);
-          return
+          return;
         }
       }
 
@@ -481,12 +455,9 @@ var readgraph = new function() {
 
     y.domain([yTracks.length, -1]);
 
-    // Update the data behind the graph
-    // TODO: Extract out so that the data can be refreshed all the time
-    // (ie we should do our own filtering based on the target start/end)
-
-    svg.selectAll('.read').remove();
     if (reads.length == 0) {
+      // Update the data behind the graph
+      svg.selectAll('.read').remove();
       return;
     }
 
@@ -514,36 +485,36 @@ var readgraph = new function() {
     updateDisplay();
   };
 
-  var makeQueryParams = function(targetStart, targetEnd, type) {
+  var makeQueryParams = function(sequenceStart, sequenceEnd, type) {
     var queryParams = {};
     queryParams.readsetIds = readsetIds.join(',');
     queryParams.type = type;
-    queryParams.target = currentTarget.name;
-    queryParams.targetStart = parseInt(targetStart);
-    queryParams.targetEnd = parseInt(targetEnd);
+    queryParams.sequenceName = currentSequence.name;
+    queryParams.sequenceStart = parseInt(sequenceStart);
+    queryParams.sequenceEnd = parseInt(sequenceEnd);
     return queryParams;
   };
 
-  var queryReads = function(targetStart, targetEnd) {
-    queryApi(targetStart, targetEnd, 'reads', setReads);
+  var queryReads = function(sequenceStart, sequenceEnd) {
+    queryApi(sequenceStart, sequenceEnd, 'reads', setReads);
   };
 
-  var queryCoverage = function(targetStart, targetEnd) {
-    queryApi(targetStart, targetEnd, 'coverage', function(reads) {
-      setCoverage(targetStart, targetEnd, reads);
+  var queryCoverage = function(sequenceStart, sequenceEnd) {
+    queryApi(sequenceStart, sequenceEnd, 'coverage', function(reads) {
+      setCoverage(sequenceStart, sequenceEnd, reads);
     });
   };
 
   var lastQueryParams = null;
-  var queryApi = function(targetStart, targetEnd, type, handler) { // TODO: Make this cleaner
-    var queryParams = makeQueryParams(targetStart, targetEnd, type);
+  var queryApi = function(sequenceStart, sequenceEnd, type, handler) { // TODO: Make this cleaner
+    var queryParams = makeQueryParams(sequenceStart, sequenceEnd, type);
 
     if (lastQueryParams
         && lastQueryParams.readsetIds == queryParams.readsetIds
         && lastQueryParams.type == queryParams.type
-        && lastQueryParams.target == queryParams.target
-        && lastQueryParams.targetStart <= queryParams.targetStart
-        && lastQueryParams.targetEnd >= queryParams.targetEnd) {
+        && lastQueryParams.sequenceName == queryParams.sequenceName
+        && lastQueryParams.sequenceStart <= queryParams.sequenceStart
+        && lastQueryParams.sequenceEnd >= queryParams.sequenceEnd) {
       return;
     }
 
@@ -565,7 +536,6 @@ var readgraph = new function() {
           handler(reads);
 
           if (res.nextPageToken) {
-            console.log("Current total reads is " + reads.length + " next page token is: " + res.nextPageToken);
             queryParams['pageToken'] = res.nextPageToken;
             callXhr(url, queryParams, handler, reads);
           }
@@ -582,29 +552,24 @@ var readgraph = new function() {
     return $.inArray(id, readsetIds) != -1;
   };
 
-  this.addReadset = function(id, targetData) {
-    // TODO: Support multiple readsets
+  // TODO: Support multiple readsets
+  this.addReadset = function(id, sequenceData) {
     readsetIds = [id];
     if (readsetIds.length == 1) {
-      targets = targetData;
-      updateTargets();
+      sequences = sequenceData;
+      updateSequences();
       $('#chooseReadsetMessage').hide();
-    } else {
-      // TODO: Refresh the graph data
-      // Eventually, targets will actually be different for different readsets, so this should update the list
     }
   };
 
   this.removeReadset = function(id) {
     readsetIds = _.without(readsetIds, id);
     if (readsetIds.length == 0) {
-      targets = [];
-      updateTargets();
+      sequences = [];
+      updateSequences();
       $('#chooseReadsetMessage').show();
       $('#graph').hide();
       $('#jumpDiv').hide();
-    } else {
-      // TODO: Update target list and graph data
     }
   }
 };
