@@ -19,6 +19,7 @@ This file serves two main purposes
 """
 
 import os, json, webapp2, jinja2
+from google.appengine.api.urlfetch_errors import DeadlineExceededError
 
 from oauth2client import appengine
 from google.appengine.api import users
@@ -57,10 +58,13 @@ class BaseRequestHandler(webapp2.RequestHandler):
 
   def get_content(self, path, method='POST', body=None):
     http = decorator.http()
-    response, content = http.request(
-      uri="https://www.googleapis.com/genomics/v1beta/%s" % path,
-      method=method, body=json.dumps(body) if body else None,
-      headers={'Content-Type': 'application/json; charset=UTF-8'})
+    try:
+      response, content = http.request(
+        uri="https://www.googleapis.com/genomics/v1beta/%s" % path,
+        method=method, body=json.dumps(body) if body else None,
+        headers={'Content-Type': 'application/json; charset=UTF-8'})
+    except DeadlineExceededError:
+      raise ApiException('API fetch timed out')
 
     # TODO: Delete debug code
     print(response)

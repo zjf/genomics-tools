@@ -57,15 +57,7 @@ limitations under the License.
         <h4 class="modal-title">Select readsets to view</h4>
       </div>
       <div class="modal-body">
-        <form class="form-inline" role="form">
-          <div class="form-group">
-            <input type="text" class="form-control" name="name" placeholder="Readset name">
-          </div>
-          <button type="submit" class="btn btn-primary hastooltip" onclick="return searchReadsets(this)"
-                  data-toggle="tooltip" data-delay="0" data-placement="right"
-                  title="Note: this search is faked, the backend api is in progress">Search</button>
-        </form>
-        <div id="readsetResults" class="list-group" style="margin-top: 20px"></div>
+        <div id="readsetResults" class="list-group"></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Done</button>
@@ -110,8 +102,6 @@ limitations under the License.
 </div>
 
 <script>
-  $('.hastooltip').tooltip();
-
   // TODO: Save current readsets in a cookie
   searchReadsets();
 </script>
