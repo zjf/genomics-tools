@@ -30,8 +30,11 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.genomics.Genomics;
 import com.google.api.services.genomics.model.GetJobResponse;
+import com.google.api.services.genomics.model.GetReadsetResponse;
 import com.google.api.services.genomics.model.ImportReadsetsRequest;
 import com.google.api.services.genomics.model.ImportReadsetsResponse;
+import com.google.api.services.genomics.model.ListReadsetsRequest;
+import com.google.api.services.genomics.model.ListReadsetsResponse;
 import com.google.api.services.genomics.model.ListReadsRequest;
 import com.google.api.services.genomics.model.ListReadsResponse;
 
@@ -254,7 +257,7 @@ public class GenomicsSample {
 
       // Route to appropriate request method
       List<String> validRequestTypes = Arrays.asList(
-          "auth", "help", "importreadsets", "getjob", "listreads");
+          "auth", "help", "importreadsets", "listreadsets", "getreadset", "getjob", "listreads");
       String requestType = cmdLine.remainingArgs.get(0);
       switch(requestType) {
         case "help":
@@ -269,6 +272,12 @@ public class GenomicsSample {
           switch(requestType) {
             case "importreadsets":
               importReadsets();
+              break;
+            case "listreadsets":
+              listReadsets();
+              break;
+            case "getreadset":
+              getReadset();
               break;
             case "getjob":
               getJob();
@@ -312,10 +321,29 @@ public class GenomicsSample {
     System.out.println("result: " + result);
   }
 
+  private static void listReadsets() throws IOException {
+    // validate the command line
+    assertOrDie(!cmdLine.datasetIds.isEmpty(), "Currently, dataset_ids is required. " +
+        "This requirement will go away in the future.\n");
+
+    ListReadsetsRequest content = new ListReadsetsRequest()
+        .setDatasetIds(cmdLine.datasetIds);
+    ListReadsetsResponse result = genomics.readsets().list(content).execute();
+    System.out.println("result: " + result);
+  }
+
+  private static void getReadset() throws IOException {
+    // validate the command line
+    assertOrDie(!cmdLine.readsetId.isEmpty(), "Must specify a readset_id\n");
+
+    GetReadsetResponse result = genomics.readsets().get(cmdLine.readsetId).execute();
+    System.out.println("result: " + result);
+  }
+
   private static void getJob() throws IOException {
     // validate the command line
     assertOrDie(!cmdLine.projectId.isEmpty(), "Currently, project_id is required. " +
-        "This requirement will go away in the future\n");
+        "This requirement will go away in the future.\n");
     assertOrDie(!cmdLine.jobId.isEmpty(), "Must specify a job_id\n");
 
     // Create request
@@ -335,7 +363,7 @@ public class GenomicsSample {
 
     // Range parameters must all be specified or none.
     if (!cmdLine.sequenceName.isEmpty() || cmdLine.sequenceStart > 0 || cmdLine.sequenceEnd > 0) {
-      assertOrDie(!cmdLine.sequenceName.isEmpty(), "Must specify a target\n");
+      assertOrDie(!cmdLine.sequenceName.isEmpty(), "Must specify a sequence_name\n");
       assertOrDie(cmdLine.sequenceStart > 0, "sequence_start must be greater than 0\n");
       // getting this far implies target_start is greater than 0
       assertOrDie(cmdLine.sequenceEnd >= cmdLine.sequenceStart,

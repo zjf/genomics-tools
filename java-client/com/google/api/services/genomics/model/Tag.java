@@ -64,6 +64,13 @@ public final class Tag extends com.google.api.client.json.GenericJson {
   private java.lang.Integer intValue;
 
   /**
+   * Two character alphanumeric string.
+   * The value may be {@code null}.
+   */
+  @com.google.api.client.util.Key
+  private java.lang.String tag;
+
+  /**
    * Type of the value.
    * The value may be {@code null}.
    */
@@ -206,6 +213,23 @@ public final class Tag extends com.google.api.client.json.GenericJson {
    */
   public Tag setIntValue(java.lang.Integer intValue) {
     this.intValue = intValue;
+    return this;
+  }
+
+  /**
+   * Two character alphanumeric string.
+   * @return value or {@code null} for none
+   */
+  public java.lang.String getTag() {
+    return tag;
+  }
+
+  /**
+   * Two character alphanumeric string.
+   * @param tag tag or {@code null} for none
+   */
+  public Tag setTag(java.lang.String tag) {
+    this.tag = tag;
     return this;
   }
 

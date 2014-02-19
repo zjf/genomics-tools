@@ -56,13 +56,18 @@ class CommandLine {
 
   @Option(name = "--dataset_id",
       metaVar = "<dataset_id>",
-      usage = "The Genomics API dataset id.")
+      usage = "The Genomics API dataset ID.")
   public String datasetId = "";
 
   @Option(name = "--job_id",
       metaVar = "<job_id>",
-      usage = "The Genomics API job id.")
+      usage = "The Genomics API job ID.")
   public String jobId = "";
+
+  @Option(name = "--readset_id",
+      metaVar = "<readsetId>",
+      usage = "The Genomics API readset ID.")
+  public String readsetId = "";
 
   @Option(name = "--page_token",
       metaVar = "<page_token>",
@@ -71,9 +76,14 @@ class CommandLine {
 
   @Option(name = "--include_fields",
       metaVar = "<field>",
-      usage = "The list of fields to be returned with this query.  " +
+      usage = "The list of fields to be returned with this query. " +
       "Leaving this blank returns all fields.")
   public List<String> includeFields = new ArrayList<String>();
+
+  @Option(name = "--dataset_ids",
+      metaVar = "<datasetIds>",
+      usage = "The list of dataset ids whose readsets are returned by this query.")
+  public List<String> datasetIds = new ArrayList<String>();
 
   @Option(name = "--readset_ids",
       metaVar = "<readsetIds>",
@@ -82,7 +92,8 @@ class CommandLine {
 
   @Option(name = "--bam_file",
       metaVar = "<bamFile>",
-      usage = "A BAM file (as Google Cloud Storage gs:// URL) to be be imported.  Use the flag multiple times to import multiple BAM files at a time.")
+      usage = "A BAM file (as Google Cloud Storage gs:// URL) to be be imported." +
+          " Use the flag multiple times to import multiple BAM files at a time.")
   public List<String> bamFiles = new ArrayList<String>();
 
   @Option(name = "--sequence_name",

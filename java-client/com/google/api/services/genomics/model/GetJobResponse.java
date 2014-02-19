@@ -43,6 +43,13 @@ public final class GetJobResponse extends com.google.api.client.json.GenericJson
   private java.lang.String id;
 
   /**
+   * The Google Cloud Console project number that this job belongs to.
+   * The value may be {@code null}.
+   */
+  @com.google.api.client.util.Key @com.google.api.client.json.JsonString
+  private java.lang.Long projectId;
+
+  /**
    * The status of this job.
    * The value may be {@code null}.
    */
@@ -80,6 +87,23 @@ public final class GetJobResponse extends com.google.api.client.json.GenericJson
    */
   public GetJobResponse setId(java.lang.String id) {
     this.id = id;
+    return this;
+  }
+
+  /**
+   * The Google Cloud Console project number that this job belongs to.
+   * @return value or {@code null} for none
+   */
+  public java.lang.Long getProjectId() {
+    return projectId;
+  }
+
+  /**
+   * The Google Cloud Console project number that this job belongs to.
+   * @param projectId projectId or {@code null} for none
+   */
+  public GetJobResponse setProjectId(java.lang.Long projectId) {
+    this.projectId = projectId;
     return this;
   }
 
