@@ -1,7 +1,24 @@
 java-client
 ==============
 
+This java client allows users to call the <a href="https://developers.google.com/genomics">Google Genomics API</a> through the command line.
+
+* To use, first build the client:
+
+```
 cd genomics-tools/java-client
 mvn package
 cd target
-java -jar google-api-services-genomics-v1-rev20130925-1.18.0-rc-SNAPSHOT.jar listreads --client_id <client_id> --project_id 0 --sequence_name 1 --sequence_start 10000 --sequence_end 10000
+```
+
+* Then, follow the <a href="https://developers.google.com/genomics/v1beta/quickstart">quickstart instructions</a> to generate a valid client_secrets.json file.
+
+* Move the client_secrets.json file into the target directory and start the authentication process:
+```
+java -jar google-api-services-genomics-v1-rev20130925-1.18.0-rc-SNAPSHOT.jar auth
+```
+
+* Once authenticated, you can then perform API queries like listreads:
+```
+java -jar google-api-services-genomics-v1-rev20130925-1.18.0-rc-SNAPSHOT.jar listreads --project_id <project_id> --sequence_name 1 --sequence_start 10000 --sequence_end 10000
+```
