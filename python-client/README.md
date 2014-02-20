@@ -20,4 +20,26 @@ Then, run this app engine app locally and visit http://localhost:8080 to browse 
 
 
 ###Code layout
-TODO!
+
+* **main.py** queries the Genomics API and handles all OAuth flows. It also serves up the html pages.
+
+* **main.html** is the main html page. It is displayed once the user has granted OAuth access to the Genomics API
+  and uses <a href="d3js.org">d3.js</a> to visualize Read data. Most of the logic is handled in javascript.
+
+* **static/js/main.js** provides some js utility functions, and calls into readgraph.js
+
+* **static/js/readgraph.js** handles the visualization of reads. It contains the most complex code.
+
+
+The python client also depends on several external libraries:
+
+* <a href="https://code.google.com/p/google-api-python-client/wiki/OAuth2Client">oauth2client</a> provides a python decorator which handles the entire oauth user flow
+
+* <a href="https://github.com/jcgregorio/httplib2">httplib2</a> is required by the oauth library
+
+* <a href="d3js.org">static/js/d3.v3.min.js</a> is a javascript library used to make rich visualizations
+
+* <a href="underscorejs.org">static/js/underscore-min.js</a> is a javascript library that provides a variety of utilities
+
+* In main.html, both <a href="http://getbootstrap.com">Bootstrap</a> and <a href="http://jquery.com/">jQuery</a>
+  are also loaded from external sites.
