@@ -11,8 +11,8 @@ Python client might be written. It uses
 <a href="https://developers.google.com/appengine/docs/python/gettingstartedpython27/introduction">Google App Engine</a>
 to deploy.
 
-* **readstore-local** implements the Genomics API locally, reading its data from a local
-<a href="http://samtools.sourceforge.net/SAMv1.pdf">BAM file</a>.
-
 * **python-mapreduce** uses the <a href="https://developers.google.com/appengine/docs/python/dataprocessing/">MapReduce Python</a>
 feature of Google App Engine to do complex calculations over API data.
+
+* **readstore-local** implements the Genomics API locally, reading its data from a local
+<a href="http://samtools.sourceforge.net/SAMv1.pdf">BAM file</a>.

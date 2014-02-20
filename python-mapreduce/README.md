@@ -1,4 +1,4 @@
 python-mapreduce
 ==============
 
-TODO: Instructions for running the map reduce on app engine
+This sample is a work in progress.
