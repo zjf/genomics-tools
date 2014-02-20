@@ -1,0 +1,71 @@
+<html>
+<head>
+  <title>Genomics Python Map Reduce</title>
+  <!-- Bootstrap Resources -->
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
+
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+
+  <!-- Local Resources -->
+  <link rel="stylesheet" href="/static/css/main.css">
+  <script src="mapreduce/jquery.js" type="text/javascript"></script>
+  <script src="static/js/custom.js" type="text/javascript"></script>
+</head>
+<body role="document">
+<div class="container theme-showcase" role="main">
+  <h1>Genomics Python Map Reduce</h1>
+  Welcome {{ username }}.
+  <br/><br/>
+  <div class="row">
+    <div class="col-sm-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Generate Coverage Statistics</h3>
+        </div>
+        <div class="panel-body">
+          Enter the parameters below to calculate the coverage statistics.
+          <br/><br/>
+          <form action="/" method="POST" >
+            <div class="row height-40">
+              <div class="col-sm-4">Readset Id:</div>
+              <div class="col-sm-4">
+                <input class="width-300" type="textfield" name="readset_id" id="readset_id"
+                       value="CJ_ppJ-WCxD-2oXg667IhDM=" /></div>
+            </div>
+            <div class="row height-40">
+              <div class="col-sm-4">Sequence Name:</div>
+              <div class="col-sm-4">
+                <select name="seqname" id="seqname" >
+                  {% for target in targets %}
+                  <option value="{{ target.name }}">{{ target.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="row height-40">
+              <div class="col-sm-4">Sequence Start:</div>
+              <div class="col-sm-4"><input type="textfield" id="seqstart" name="seqstart" value="1" /></div>
+            </div>
+            <div class="row height-40">
+              <div class="col-sm-4">Sequence End:</div>
+              <div class="col-sm-4"><input type="textfield" id="seqend" name="seqend" value="2" /></div>
+            </div>
+            <div class="row height-40">
+              <div class="col-sm-4">&nbsp;</div>
+              <div class="col-sm-4">
+                <input class="btn btn-primary" type="submit" id="submit_read" name="submit_read" value="Submit">
+              </div>
+            </div>
+            </table>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
