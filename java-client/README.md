@@ -26,4 +26,12 @@ java -jar google-api-services-genomics-v1-rev20130925-1.18.0-rc-SNAPSHOT.jar lis
 ```
 
 ###Code layout
-TODO!
+
+Most of the Java code is a generated client library. This includes everything under com/google/api/services. There are only 2 non-generated files:
+
+* **CommandLine.java** defines all of the possible command line arguments using the
+<a href="http://args4j.kohsuke.org/index.html">args4j library</a>.
+
+* **GenomicsSample.java** provides the bulk of the logic. In its main method, the user's request is dispatched to
+either make a call to the Genomics API or to authenticate the user. Most of the code deals with OAuth.
+

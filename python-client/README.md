@@ -7,7 +7,8 @@ This python client provides a simple app engine application which fetches data f
 <a href="https://developers.google.com/genomics">Google Genomics API</a> through a web interface.
 
 To run this code, you'll need to
-<a href="https://developers.google.com/appengine/docs/python/gettingstartedpython27/introduction">set up an app engine environment</a>.
+<a href="https://developers.google.com/appengine/docs/python/gettingstartedpython27/introduction">set up a
+Google App Engine environment</a>.
 
 You will also need to follow the <a href="https://developers.google.com/genomics/v1beta/quickstart">quickstart instructions</a>
 to generate a valid client_secrets.json file. However, for this application you want to generate secrets
