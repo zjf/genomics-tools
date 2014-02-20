@@ -49,13 +49,13 @@ limitations under the License.
             <div class="row height-40">
               <div class="col-sm-4">Readset Id:</div>
               <div class="col-sm-4">
-                <input class="width-300" type="textfield" name="readset_id" id="readset_id"
+                <input class="width-300" type="textfield" name="readsetId" id="readsetId"
                        value="CJ_ppJ-WCxD-2oXg667IhDM=" /></div>
             </div>
             <div class="row height-40">
               <div class="col-sm-4">Sequence Name:</div>
               <div class="col-sm-4">
-                <select name="seqname" id="seqname" >
+                <select name="sequenceName" id="sequenceName" >
                   {% for target in targets %}
                   <option value="{{ target.name }}">{{ target.name }}</option>
                   {% endfor %}
@@ -64,16 +64,16 @@ limitations under the License.
             </div>
             <div class="row height-40">
               <div class="col-sm-4">Sequence Start:</div>
-              <div class="col-sm-4"><input type="textfield" id="seqstart" name="seqstart" value="1" /></div>
+              <div class="col-sm-4"><input type="textfield" id="sequenceStart" name="sequenceStart" value="1" /></div>
             </div>
             <div class="row height-40">
               <div class="col-sm-4">Sequence End:</div>
-              <div class="col-sm-4"><input type="textfield" id="seqend" name="seqend" value="2" /></div>
+              <div class="col-sm-4"><input type="textfield" id="sequenceEnd" name="sequenceEnd" value="2" /></div>
             </div>
             <div class="row height-40">
               <div class="col-sm-4">&nbsp;</div>
               <div class="col-sm-4">
-                <input class="btn btn-primary" type="submit" id="submit_read" name="submit_read" value="Submit">
+                <input class="btn btn-primary" type="submit" id="submitRead" name="submitRead" value="Submit">
               </div>
             </div>
             </table>

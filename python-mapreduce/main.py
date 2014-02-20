@@ -18,7 +18,9 @@ Example Genomics Map Reduce
 
 import datetime
 import jinja2
+import json
 import logging
+import os
 import re
 import urllib
 import webapp2
@@ -31,11 +33,32 @@ from google.appengine.ext.webapp import blobstore_handlers
 from google.appengine.api import files
 from google.appengine.api import taskqueue
 from google.appengine.api import users
+from google.appengine.api import urlfetch
+from google.appengine.api.urlfetch_errors import DeadlineExceededError
 
 from mapreduce import base_handler
 from mapreduce import mapreduce_pipeline
 from mapreduce import operation as op
 from mapreduce import shuffler
+
+from oauth2client import appengine
+
+# Increase timeout to the maximum for all requests
+urlfetch.set_default_fetch_deadline(60)
+
+JINJA_ENVIRONMENT = jinja2.Environment(
+  loader=jinja2.FileSystemLoader('templates'),
+  autoescape=True,
+  extensions=['jinja2.ext.autoescape'])
+
+client_secrets = os.path.join(os.path.dirname(__file__), 'client_secrets.json')
+
+decorator = appengine.oauth2decorator_from_clientsecrets(
+  client_secrets,
+  scope=[
+    'https://www.googleapis.com/auth/genomics',
+    'https://www.googleapis.com/auth/devstorage.read_write'
+  ])
 
 
 class FileMetadata(db.Model):
@@ -116,20 +139,57 @@ class FileMetadata(db.Model):
     sep = FileMetadata.__SEP
     return str(username + sep + str(date) + sep + blob_key)
 
+class ApiException(Exception):
+  pass
 
-class IndexHandler(webapp2.RequestHandler):
+class BaseRequestHandler(webapp2.RequestHandler):
+  def handle_exception(self, exception, debug_mode):
+    if isinstance(exception, ApiException):
+      # ApiExceptions are expected, and will return nice error messages to the client
+      self.response.write(exception.message)
+      self.response.set_status(400)
+    else:
+      # All other exceptions are unexpected and should crash properly
+      return webapp2.RequestHandler.handle_exception(self, exception, debug_mode)
+
+  def get_content(self, path, method='POST', body=None):
+    http = decorator.http()
+    try:
+      response, content = http.request(
+        uri="https://www.googleapis.com/genomics/v1beta/%s" % path,
+        method=method, body=json.dumps(body) if body else None,
+        headers={'Content-Type': 'application/json; charset=UTF-8'})
+    except DeadlineExceededError:
+      raise ApiException('API fetch timed out')
+
+    # TODO: Delete debug code
+    print(response)
+    print(content)
+
+    if response.status == 404:
+      raise ApiException('API not found')
+    elif response.status == 400:
+      raise ApiException('API request malformed')
+    elif response.status != 200:
+      raise ApiException('Something went wrong with the API call!')
+
+    content = json.loads(content)
+    if 'error' in content:
+      raise ApiException(content['error']['message'])
+
+    self.response.write(json.dumps(content))
+
+class IndexHandler(BaseRequestHandler):
   """The main page that users will interact with, which presents users with
   the ability to upload new data or run MapReduce jobs on their existing data.
   """
 
-  template_env = jinja2.Environment(loader=jinja2.FileSystemLoader("templates"),
-                                    autoescape=True)
-
+  @decorator.oauth_aware
   def get(self):
     user = users.get_current_user()
     username = user.nickname()
 
-    # taken from the python-client app. Maybe refactor to common place ??? -jlucena
+    # taken from the python-client app. Maybe refactor to common place ???
     targets = [
       {'name': "chr1", 'sequenceLength': 249250621},
       {'name': "chr2", 'sequenceLength': 243199373},
@@ -155,27 +215,31 @@ class IndexHandler(webapp2.RequestHandler):
       {'name': "chr22", 'sequenceLength': 51304566},
       {'name': "chrX", 'sequenceLength': 155270560},
       {'name': "chrY", 'sequenceLength': 59373566},
-    ]
+      ]
 
-    self.response.out.write(self.template_env.get_template("index.html").render(
-        {"username": username,
-         "targets": targets}))
+    self.response.out.write(JINJA_ENVIRONMENT.get_template("index.html").render(
+      {"username": username,
+       "targets": targets}))
 
+  @decorator.oauth_aware
   def post(self):
-    readset_id = self.request.get("readset_id")
-    seqname = self.request.get("seqname")
-    seqstart = self.request.get("seqstart")
-    seqend = self.request.get("seqend")
 
-    if self.request.get("submit_read"):
-        self.response.out.write("yo yo: %s %s %s %s" % (readset_id, seqname, seqstart, seqend))
-        return
+    body = {
+      'readsetIds': self.request.get("readsetId"),
+      'sequenceName': self.request.get('sequenceName'),
+      'sequenceStart': max(0, int(self.request.get('sequenceStart'))),
+      'sequenceEnd': int(self.request.get('sequenceEnd')),
+      }
 
+    if self.request.get("submitRead"):
+      #self.get_content("reads/search", body=body)
+      self.response.out.write("yo yo: %s" % (body["readsetIds"]))
+      return
 
-    pipeline = PhrasesPipeline(readset_id, seqname)
+      #pipeline = PhrasesPipeline(readset_id, seqname)
 
-    pipeline.start()
-    self.redirect(pipeline.base_path + "/status?root=" + pipeline.pipeline_id)
+      #pipeline.start()
+      #self.redirect(pipeline.base_path + "/status?root=" + pipeline.pipeline_id)
 
 
 def split_into_sentences(s):
@@ -268,18 +332,18 @@ class WordCountPipeline(base_handler.PipelineBase):
   def run(self, filekey, blobkey):
     logging.debug("filename is %s" % filekey)
     output = yield mapreduce_pipeline.MapreducePipeline(
-        "word_count",
-        "main.word_count_map",
-        "main.word_count_reduce",
-        "mapreduce.input_readers.BlobstoreZipInputReader",
-        "mapreduce.output_writers.BlobstoreOutputWriter",
-        mapper_params={
-            "blob_key": blobkey,
+      "word_count",
+      "main.word_count_map",
+      "main.word_count_reduce",
+      "mapreduce.input_readers.BlobstoreZipInputReader",
+      "mapreduce.output_writers.BlobstoreOutputWriter",
+      mapper_params={
+        "blob_key": blobkey,
         },
-        reducer_params={
-            "mime_type": "text/plain",
+      reducer_params={
+        "mime_type": "text/plain",
         },
-        shards=16)
+      shards=16)
     yield StoreOutput("WordCount", filekey, output)
 
 
@@ -294,18 +358,18 @@ class IndexPipeline(base_handler.PipelineBase):
 
   def run(self, filekey, blobkey):
     output = yield mapreduce_pipeline.MapreducePipeline(
-        "index",
-        "main.index_map",
-        "main.index_reduce",
-        "mapreduce.input_readers.BlobstoreZipInputReader",
-        "mapreduce.output_writers.BlobstoreOutputWriter",
-        mapper_params={
-            "blob_key": blobkey,
+      "index",
+      "main.index_map",
+      "main.index_reduce",
+      "mapreduce.input_readers.BlobstoreZipInputReader",
+      "mapreduce.output_writers.BlobstoreOutputWriter",
+      mapper_params={
+        "blob_key": blobkey,
         },
-        reducer_params={
-            "mime_type": "text/plain",
+      reducer_params={
+        "mime_type": "text/plain",
         },
-        shards=16)
+      shards=16)
     yield StoreOutput("Index", filekey, output)
 
 
@@ -319,18 +383,18 @@ class PhrasesPipeline(base_handler.PipelineBase):
 
   def run(self, filekey, blobkey):
     output = yield mapreduce_pipeline.MapreducePipeline(
-        "phrases",
-        "main.phrases_map",
-        "main.phrases_reduce",
-        "mapreduce.input_readers.BlobstoreZipInputReader",
-        "mapreduce.output_writers.BlobstoreOutputWriter",
-        mapper_params={
-            "blob_key": blobkey,
+      "phrases",
+      "main.phrases_map",
+      "main.phrases_reduce",
+      "mapreduce.input_readers.BlobstoreZipInputReader",
+      "mapreduce.output_writers.BlobstoreOutputWriter",
+      mapper_params={
+        "blob_key": blobkey,
         },
-        reducer_params={
-            "mime_type": "text/plain",
+      reducer_params={
+        "mime_type": "text/plain",
         },
-        shards=16)
+      shards=16)
     yield StoreOutput("Phrases", filekey, output)
 
 
@@ -395,9 +459,9 @@ class DownloadHandler(blobstore_handlers.BlobstoreDownloadHandler):
 
 
 app = webapp2.WSGIApplication(
-    [
-        ('/', IndexHandler),
-        ('/upload', UploadHandler),
-        (r'/blobstore/(.*)', DownloadHandler),
+  [
+    ('/', IndexHandler),
+    ('/upload', UploadHandler),
+    (r'/blobstore/(.*)', DownloadHandler),
     ],
-    debug=True)
+  debug=True)
