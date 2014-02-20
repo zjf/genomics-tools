@@ -162,78 +162,89 @@ class BaseRequestHandler(webapp2.RequestHandler):
     except DeadlineExceededError:
       raise ApiException('API fetch timed out')
 
-    # TODO: Delete debug code
-    print(response)
-    print(content)
+    # Log results to debug
+    logging.debug("Response:")
+    logging.debug(response)
+    logging.debug("Content:")
+    logging.debug(content)
 
+    content = json.loads(content)
     if response.status == 404:
       raise ApiException('API not found')
     elif response.status == 400:
       raise ApiException('API request malformed')
     elif response.status != 200:
-      raise ApiException('Something went wrong with the API call!')
-
-    content = json.loads(content)
-    if 'error' in content:
-      raise ApiException(content['error']['message'])
+      if 'error' in content:
+        logging.info("Error Code: %s Message: %s" %
+                     (content['error']['code'], content['error']['message']))
+      raise ApiException("Something went wrong with the API call! "
+                        "Please check the logs for more details.")
 
     self.response.write(json.dumps(content))
 
-class IndexHandler(BaseRequestHandler):
+class MainHandler(BaseRequestHandler):
   """The main page that users will interact with, which presents users with
   the ability to upload new data or run MapReduce jobs on their existing data.
   """
 
   @decorator.oauth_aware
   def get(self):
-    user = users.get_current_user()
-    username = user.nickname()
+    if decorator.has_credentials():
+      username = users.User().nickname()
 
-    # taken from the python-client app. Maybe refactor to common place ???
-    targets = [
-      {'name': "chr1", 'sequenceLength': 249250621},
-      {'name': "chr2", 'sequenceLength': 243199373},
-      {'name': "chr3", 'sequenceLength': 198022430},
-      {'name': "chr4", 'sequenceLength': 191154276},
-      {'name': "chr5", 'sequenceLength': 180915260},
-      {'name': "chr6", 'sequenceLength': 171115067},
-      {'name': "chr7", 'sequenceLength': 159138663},
-      {'name': "chr8", 'sequenceLength': 146364022},
-      {'name': "chr9", 'sequenceLength': 141213431},
-      {'name': "chr10", 'sequenceLength': 135534747},
-      {'name': "chr11", 'sequenceLength': 135006516},
-      {'name': "chr12", 'sequenceLength': 133851895},
-      {'name': "chr13", 'sequenceLength': 115169878},
-      {'name': "chr14", 'sequenceLength': 107349540},
-      {'name': "chr15", 'sequenceLength': 102531392},
-      {'name': "chr16", 'sequenceLength': 90354753},
-      {'name': "chr17", 'sequenceLength': 81195210},
-      {'name': "chr18", 'sequenceLength': 78077248},
-      {'name': "chr19", 'sequenceLength': 59128983},
-      {'name': "chr20", 'sequenceLength': 63025520},
-      {'name': "chr21", 'sequenceLength': 48129895},
-      {'name': "chr22", 'sequenceLength': 51304566},
-      {'name': "chrX", 'sequenceLength': 155270560},
-      {'name': "chrY", 'sequenceLength': 59373566},
-      ]
+      # taken from the python-client app. Maybe refactor to common place ???
+      targets = [
+        {'name': "chr1", 'sequenceLength': 249250621},
+        {'name': "chr2", 'sequenceLength': 243199373},
+        {'name': "chr3", 'sequenceLength': 198022430},
+        {'name': "chr4", 'sequenceLength': 191154276},
+        {'name': "chr5", 'sequenceLength': 180915260},
+        {'name': "chr6", 'sequenceLength': 171115067},
+        {'name': "chr7", 'sequenceLength': 159138663},
+        {'name': "chr8", 'sequenceLength': 146364022},
+        {'name': "chr9", 'sequenceLength': 141213431},
+        {'name': "chr10", 'sequenceLength': 135534747},
+        {'name': "chr11", 'sequenceLength': 135006516},
+        {'name': "chr12", 'sequenceLength': 133851895},
+        {'name': "chr13", 'sequenceLength': 115169878},
+        {'name': "chr14", 'sequenceLength': 107349540},
+        {'name': "chr15", 'sequenceLength': 102531392},
+        {'name': "chr16", 'sequenceLength': 90354753},
+        {'name': "chr17", 'sequenceLength': 81195210},
+        {'name': "chr18", 'sequenceLength': 78077248},
+        {'name': "chr19", 'sequenceLength': 59128983},
+        {'name': "chr20", 'sequenceLength': 63025520},
+        {'name': "chr21", 'sequenceLength': 48129895},
+        {'name': "chr22", 'sequenceLength': 51304566},
+        {'name': "chrX", 'sequenceLength': 155270560},
+        {'name': "chrY", 'sequenceLength': 59373566},
+        ]
 
-    self.response.out.write(JINJA_ENVIRONMENT.get_template("index.html").render(
-      {"username": username,
-       "targets": targets}))
+      template = JINJA_ENVIRONMENT.get_template('index.html')
+      self.response.out.write(template.render({
+        "username": username,
+        "targets": targets
+      }))
+    else:
+      template = JINJA_ENVIRONMENT.get_template('grantaccess.html')
+      self.response.write(template.render({
+        'url': decorator.authorize_url()
+      }))
 
   @decorator.oauth_aware
   def post(self):
 
     body = {
-      'readsetIds': self.request.get("readsetId"),
+      'readsetIds': [self.request.get("readsetId")],
       'sequenceName': self.request.get('sequenceName'),
       'sequenceStart': max(0, int(self.request.get('sequenceStart'))),
       'sequenceEnd': int(self.request.get('sequenceEnd')),
       }
 
     if self.request.get("submitRead"):
-      #self.get_content("reads/search", body=body)
-      self.response.out.write("yo yo: %s" % (body["readsetIds"]))
+      logging.debug("Request Body:")
+      logging.debug(body)
+      self.get_content("reads/search", body=body)
       return
 
       #pipeline = PhrasesPipeline(readset_id, seqname)
@@ -460,8 +471,9 @@ class DownloadHandler(blobstore_handlers.BlobstoreDownloadHandler):
 
 app = webapp2.WSGIApplication(
   [
-    ('/', IndexHandler),
+    ('/', MainHandler),
     ('/upload', UploadHandler),
     (r'/blobstore/(.*)', DownloadHandler),
-    ],
+    (decorator.callback_path, decorator.callback_handler()),
+   ],
   debug=True)

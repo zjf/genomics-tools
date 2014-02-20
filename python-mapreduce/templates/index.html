@@ -37,7 +37,7 @@ limitations under the License.
   Welcome {{ username }}.
   <br/><br/>
   <div class="row">
-    <div class="col-sm-6">
+    <div class="col-md-8">
       <div class="panel panel-default">
         <div class="panel-heading">
           <h3 class="panel-title">Generate Coverage Statistics</h3>
@@ -47,33 +47,35 @@ limitations under the License.
           <br/><br/>
           <form action="/" method="POST" >
             <div class="row height-40">
-              <div class="col-sm-4">Readset Id:</div>
-              <div class="col-sm-4">
+              <div class="col-md-4">Readset Id:</div>
+              <div class="col-md-8">
                 <input class="width-300" type="textfield" name="readsetId" id="readsetId"
                        value="CJ_ppJ-WCxD-2oXg667IhDM=" /></div>
             </div>
             <div class="row height-40">
-              <div class="col-sm-4">Sequence Name:</div>
-              <div class="col-sm-4">
+              <div class="col-md-4">Sequence Name:</div>
+              <div class="col-md-8">
                 <select name="sequenceName" id="sequenceName" >
                   {% for target in targets %}
-                  <option value="{{ target.name }}">{{ target.name }}</option>
+                  <option value="{{ target.name }}"{% if target.name == 'chr22'  %} selected{% endif %}>{{ target.name }}</option>
                   {% endfor %}
                 </select>
               </div>
             </div>
             <div class="row height-40">
-              <div class="col-sm-4">Sequence Start:</div>
-              <div class="col-sm-4"><input type="textfield" id="sequenceStart" name="sequenceStart" value="1" /></div>
+              <div class="col-md-4">Sequence Start:</div>
+              <div class="col-md-8"><input type="textfield" id="sequenceStart" name="sequenceStart" value="68198" />
+              </div>
             </div>
             <div class="row height-40">
-              <div class="col-sm-4">Sequence End:</div>
-              <div class="col-sm-4"><input type="textfield" id="sequenceEnd" name="sequenceEnd" value="2" /></div>
+              <div class="col-md-4">Sequence End:</div>
+              <div class="col-md-8"><input type="textfield" id="sequenceEnd" name="sequenceEnd" value="68199" /></div>
             </div>
             <div class="row height-40">
-              <div class="col-sm-4">&nbsp;</div>
-              <div class="col-sm-4">
+              <div class="col-md-4">&nbsp;</div>
+              <div class="col-md-8">
                 <input class="btn btn-primary" type="submit" id="submitRead" name="submitRead" value="Submit">
+                &nbsp;(It may take some time).
               </div>
             </div>
             </table>

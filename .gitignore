@@ -3,3 +3,4 @@
 .idea
 client_secrets.json
 java-client/target
+/.project
