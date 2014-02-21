@@ -36,6 +36,8 @@ from google.appengine.api import users
 from google.appengine.api import urlfetch
 from google.appengine.api.urlfetch_errors import DeadlineExceededError
 
+from collections import defaultdict
+
 from mapreduce import base_handler
 from mapreduce import mapreduce_pipeline
 from mapreduce import operation as op
@@ -274,8 +276,7 @@ class MainHandler(BaseRequestHandler):
 
     if content != None:
       # Calculate results
-
-      results = [{"sequence": 68198, "coverage": 5}, {"sequence": 68199, "coverage": 11}]
+      coverage = compute_coverage(content, body["sequenceStart"], body["sequenceEnd"])
 
       # Render template with results.
       username = users.User().nickname()
@@ -284,8 +285,8 @@ class MainHandler(BaseRequestHandler):
         "username": username,
         "targets": MainHandler.TARGETS,
         "settings": body,
-        "hasResults": len(results),
-        "results": results,
+        "hasResults": len(coverage),
+        "results": coverage,
       }))
 
       #self.response.write(json.dumps(content))
@@ -294,6 +295,19 @@ class MainHandler(BaseRequestHandler):
 
       #pipeline.start()
       #self.redirect(pipeline.base_path + "/status?root=" + pipeline.pipeline_id)
+
+def compute_coverage(content, sequenceStart, sequenceEnd):
+  """Takes the json results from the Genomics API call and computes coverage. """
+  coverage = defaultdict(int)
+  for read in content["reads"]:
+    # Check the read against every sequence.
+    for sequence in range(sequenceStart, sequenceEnd + 1):
+      # If the position is in the range then count it as being covered by that read.
+      if sequence >= read["position"] and sequence < read["position"] + len(read["alignedSequence"]):
+        coverage[sequence] += 1
+
+  logging.debug("Processed: %d reads." % len(content["reads"]))
+  return coverage
 
 
 def split_into_sentences(s):
