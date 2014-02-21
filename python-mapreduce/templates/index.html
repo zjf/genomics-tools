@@ -79,7 +79,8 @@ limitations under the License.
             <div class="row height-40">
               <div class="col-md-4">&nbsp;</div>
               <div class="col-md-8">
-                <input class="btn btn-primary" type="submit" id="submitRead" name="submitRead" value="Submit">
+                <input class="btn btn-primary" type="submit" id="submitRead" name="submitRead" value="Submit"
+                     onclick="submitReadProcessing()">
                 &nbsp;It may be quicker to:&nbsp;
                 <input class="btn btn-info" type="submit" id="submitReadSample"
                        name="submitReadSample" value="Use Sample Data">
@@ -87,11 +88,11 @@ limitations under the License.
             </div>
           </form>
           {% if errorMessage %}
-            <div class="alert alert-danger">
+            <div id="errorMessage" class="alert alert-danger">
               {{ errorMessage }}
             </div>
           {% endif %}
-          {% if hasResults %}
+          {% if results %}
           <b>Coverage Results:</b>
           <br/><br/>
           <div class="table-responsive">

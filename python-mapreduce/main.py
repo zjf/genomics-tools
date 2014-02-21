@@ -63,7 +63,7 @@ decorator = appengine.oauth2decorator_from_clientsecrets(
   ])
 
 
-class FileMetadata(db.Model):
+class GenomicsCoverageStatistics(db.Model):
   """A helper class that will hold metadata for the user's blobs.
 
   Specifially, we want to keep track of who uploaded it, where they uploaded it
@@ -80,20 +80,17 @@ class FileMetadata(db.Model):
   __SEP = ".."
   __NEXT = "./"
 
-  owner = db.UserProperty()
-  filename = db.StringProperty()
-  uploadedOn = db.DateTimeProperty()
-  source = db.StringProperty()
-  blobkey = db.StringProperty()
-  wordcount_link = db.StringProperty()
-  index_link = db.StringProperty()
-  phrases_link = db.StringProperty()
+  readsetId = db.StringProperty()
+  sequenceName = db.StringProperty()
+  sequence = db.IntegerProperty()
+  coverage = db.IntegerProperty()
+  date = db.DateTimeProperty()
 
   @staticmethod
-  def getFirstKeyForUser(username):
+  def getFirstKeyForReadsetId(readsetId):
     """Helper function that returns the first possible key a user could own.
 
-    This is useful for table scanning, in conjunction with getLastKeyForUser.
+    This is useful for table scanning, in conjunction with getLastKeyForReadsetId.
 
     Args:
       username: The given user's e-mail address.
@@ -103,10 +100,10 @@ class FileMetadata(db.Model):
       user data).
     """
 
-    return db.Key.from_path("FileMetadata", username + FileMetadata.__SEP)
+    return db.Key.from_path("GenomicsCoverageStatistics", readsetId + GenomicsCoverageStatistics.__SEP)
 
   @staticmethod
-  def getLastKeyForUser(username):
+  def getLastKeyForReadsetId(readsetId):
     """Helper function that returns the last possible key a user could own.
 
     This is useful for table scanning, in conjunction with getFirstKeyForUser.
@@ -119,10 +116,10 @@ class FileMetadata(db.Model):
       user data).
     """
 
-    return db.Key.from_path("FileMetadata", username + FileMetadata.__NEXT)
+    return db.Key.from_path("GenomicsCoverageStatistics", readsetId + GenomicsCoverageStatistics.__NEXT)
 
   @staticmethod
-  def getKeyName(username, date, blob_key):
+  def getKeyName(readsetId, sequenceName, sequence):
     """Returns the internal key for a particular item in the database.
 
     Our items are stored with keys of the form 'user/date/blob_key' ('/' is
@@ -138,8 +135,8 @@ class FileMetadata(db.Model):
       The internal key for the item specified by (username, date, blob_key).
     """
 
-    sep = FileMetadata.__SEP
-    return str(username + sep + str(date) + sep + blob_key)
+    sep = GenomicsCoverageStatistics.__SEP
+    return str(readsetId + sep + sequenceName + sep + str(sequence))
 
 class ApiException(Exception):
   pass
@@ -181,7 +178,7 @@ class BaseRequestHandler(webapp2.RequestHandler):
       if 'error' in content:
         logging.error("Error Code: %s Message: %s" %
                      (content['error']['code'], content['error']['message']))
-      raise ApiException("Something went wrong with the API call! "
+      raise ApiException("Something went wrong with the API call. "
                         "Please check the logs for more details.")
     return content
 
@@ -279,6 +276,7 @@ class MainHandler(BaseRequestHandler):
     if content != None:
       # Calculate results
       coverage = compute_coverage(content, body["sequenceStart"], body["sequenceEnd"])
+      store_coverage(body["readsetIds"][0], body["sequenceName"], coverage)
 
     # Render template with results or error.
     username = users.User().nickname()
@@ -288,11 +286,8 @@ class MainHandler(BaseRequestHandler):
       "targets": MainHandler.TARGETS,
       "settings": body,
       "errorMessage": errorMessage,
-      "hasResults": len(coverage) if coverage else None,
       "results": coverage,
     }))
-
-      #self.response.write(json.dumps(content))
 
       #pipeline = PhrasesPipeline(readset_id, seqname)
 
@@ -312,6 +307,16 @@ def compute_coverage(content, sequenceStart, sequenceEnd):
   logging.debug("Processed: %d reads." % len(content["reads"]))
   return coverage
 
+def store_coverage(readsetId, sequenceName, dict):
+  for sequence, coverage in dict.iteritems():
+    key = GenomicsCoverageStatistics.getKeyName(readsetId, sequenceName, sequence)
+    s = GenomicsCoverageStatistics(key_name = key)
+    s.readsetId = readsetId
+    s.sequenceName = sequenceName
+    s.sequence = sequence
+    s.coverage = coverage
+    s.date = datetime.datetime.now()
+    s.put()
 
 def split_into_sentences(s):
   """Split text into list of sentences."""
@@ -342,56 +347,6 @@ def word_count_reduce(key, values):
   """Word count reduce function."""
   yield "%s: %d\n" % (key, len(values))
 
-
-def index_map(data):
-  """Index demo map function."""
-  (entry, text_fn) = data
-  text = text_fn()
-
-  logging.debug("Got %s", entry.filename)
-  for s in split_into_sentences(text):
-    for w in split_into_words(s.lower()):
-      yield (w, entry.filename)
-
-
-def index_reduce(key, values):
-  """Index demo reduce function."""
-  yield "%s: %s\n" % (key, list(set(values)))
-
-
-PHRASE_LENGTH = 4
-
-
-def phrases_map(data):
-  """Phrases demo map function."""
-  (entry, text_fn) = data
-  text = text_fn()
-  filename = entry.filename
-
-  logging.debug("Got %s", filename)
-  for s in split_into_sentences(text):
-    words = split_into_words(s.lower())
-    if len(words) < PHRASE_LENGTH:
-      yield (":".join(words), filename)
-      continue
-    for i in range(0, len(words) - PHRASE_LENGTH):
-      yield (":".join(words[i:i+PHRASE_LENGTH]), filename)
-
-
-def phrases_reduce(key, values):
-  """Phrases demo reduce function."""
-  if len(values) < 10:
-    return
-  counts = {}
-  for filename in values:
-    counts[filename] = counts.get(filename, 0) + 1
-
-  words = re.sub(r":", " ", key)
-  threshold = len(values) / 2
-  for filename, count in counts.items():
-    if count > threshold:
-      yield "%s:%s\n" % (words, filename)
-
 class WordCountPipeline(base_handler.PipelineBase):
   """A pipeline to run Word count demo.
 
@@ -415,58 +370,7 @@ class WordCountPipeline(base_handler.PipelineBase):
         "mime_type": "text/plain",
         },
       shards=16)
-    yield StoreOutput("WordCount", filekey, output)
-
-
-class IndexPipeline(base_handler.PipelineBase):
-  """A pipeline to run Index demo.
-
-  Args:
-    blobkey: blobkey to process as string. Should be a zip archive with
-      text files inside.
-  """
-
-
-  def run(self, filekey, blobkey):
-    output = yield mapreduce_pipeline.MapreducePipeline(
-      "index",
-      "main.index_map",
-      "main.index_reduce",
-      "mapreduce.input_readers.BlobstoreZipInputReader",
-      "mapreduce.output_writers.BlobstoreOutputWriter",
-      mapper_params={
-        "blob_key": blobkey,
-        },
-      reducer_params={
-        "mime_type": "text/plain",
-        },
-      shards=16)
-    yield StoreOutput("Index", filekey, output)
-
-
-class PhrasesPipeline(base_handler.PipelineBase):
-  """A pipeline to run Phrases demo.
-
-  Args:
-    blobkey: blobkey to process as string. Should be a zip archive with
-      text files inside.
-  """
-
-  def run(self, filekey, blobkey):
-    output = yield mapreduce_pipeline.MapreducePipeline(
-      "phrases",
-      "main.phrases_map",
-      "main.phrases_reduce",
-      "mapreduce.input_readers.BlobstoreZipInputReader",
-      "mapreduce.output_writers.BlobstoreOutputWriter",
-      mapper_params={
-        "blob_key": blobkey,
-        },
-      reducer_params={
-        "mime_type": "text/plain",
-        },
-      shards=16)
-    yield StoreOutput("Phrases", filekey, output)
+    yield StoreOutput(filekey, output)
 
 
 class StoreOutput(base_handler.PipelineBase):
@@ -478,62 +382,17 @@ class StoreOutput(base_handler.PipelineBase):
     output: the blobstore location where the output of the job is stored
   """
 
-  def run(self, mr_type, encoded_key, output):
-    logging.debug("output is %s" % str(output))
+  def run(self, encoded_key, coverage):
+    logging.debug("Coverage is %d" % coverage)
     key = db.Key(encoded=encoded_key)
-    m = FileMetadata.get(key)
-
-    if mr_type == "WordCount":
-      m.wordcount_link = output[0]
-    elif mr_type == "Index":
-      m.index_link = output[0]
-    elif mr_type == "Phrases":
-      m.phrases_link = output[0]
-
-    m.put()
-
-class UploadHandler(blobstore_handlers.BlobstoreUploadHandler):
-  """Handler to upload data to blobstore."""
-
-  def post(self):
-    source = "uploaded by user"
-    upload_files = self.get_uploads("file")
-    blob_key = upload_files[0].key()
-    name = self.request.get("name")
-
-    user = users.get_current_user()
-
-    username = user.nickname()
-    date = datetime.datetime.now()
-    str_blob_key = str(blob_key)
-    key = FileMetadata.getKeyName(username, date, str_blob_key)
-
-    m = FileMetadata(key_name = key)
-    m.owner = user
-    m.filename = name
-    m.uploadedOn = date
-    m.source = source
-    m.blobkey = str_blob_key
-    m.put()
-
-    self.redirect("/")
-
-
-class DownloadHandler(blobstore_handlers.BlobstoreDownloadHandler):
-  """Handler to download blob by blobkey."""
-
-  def get(self, key):
-    key = str(urllib.unquote(key)).strip()
-    logging.debug("key is %s" % key)
-    blob_info = blobstore.BlobInfo.get(key)
-    self.send_blob(blob_info)
-
+    s = GenomicsCoverageStatistics.get(key)
+    s.coverage = coverage
+    s.date = datetime.datetime.now()
+    s.put()
 
 app = webapp2.WSGIApplication(
   [
     ('/', MainHandler),
-    ('/upload', UploadHandler),
-    (r'/blobstore/(.*)', DownloadHandler),
     (decorator.callback_path, decorator.callback_handler()),
    ],
   debug=True)
