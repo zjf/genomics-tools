@@ -180,50 +180,58 @@ class BaseRequestHandler(webapp2.RequestHandler):
       raise ApiException("Something went wrong with the API call! "
                         "Please check the logs for more details.")
 
-    self.response.write(json.dumps(content))
+    return content
 
 class MainHandler(BaseRequestHandler):
   """The main page that users will interact with, which presents users with
   the ability to upload new data or run MapReduce jobs on their existing data.
   """
+  # taken from the python-client app. Maybe refactor to common place ???
+  TARGETS = [
+    {'name': "chr1", 'sequenceLength': 249250621},
+    {'name': "chr2", 'sequenceLength': 243199373},
+    {'name': "chr3", 'sequenceLength': 198022430},
+    {'name': "chr4", 'sequenceLength': 191154276},
+    {'name': "chr5", 'sequenceLength': 180915260},
+    {'name': "chr6", 'sequenceLength': 171115067},
+    {'name': "chr7", 'sequenceLength': 159138663},
+    {'name': "chr8", 'sequenceLength': 146364022},
+    {'name': "chr9", 'sequenceLength': 141213431},
+    {'name': "chr10", 'sequenceLength': 135534747},
+    {'name': "chr11", 'sequenceLength': 135006516},
+    {'name': "chr12", 'sequenceLength': 133851895},
+    {'name': "chr13", 'sequenceLength': 115169878},
+    {'name': "chr14", 'sequenceLength': 107349540},
+    {'name': "chr15", 'sequenceLength': 102531392},
+    {'name': "chr16", 'sequenceLength': 90354753},
+    {'name': "chr17", 'sequenceLength': 81195210},
+    {'name': "chr18", 'sequenceLength': 78077248},
+    {'name': "chr19", 'sequenceLength': 59128983},
+    {'name': "chr20", 'sequenceLength': 63025520},
+    {'name': "chr21", 'sequenceLength': 48129895},
+    {'name': "chr22", 'sequenceLength': 51304566},
+    {'name': "chrX", 'sequenceLength': 155270560},
+    {'name': "chrY", 'sequenceLength': 59373566},
+    ]
 
   @decorator.oauth_aware
   def get(self):
     if decorator.has_credentials():
       username = users.User().nickname()
 
-      # taken from the python-client app. Maybe refactor to common place ???
-      targets = [
-        {'name': "chr1", 'sequenceLength': 249250621},
-        {'name': "chr2", 'sequenceLength': 243199373},
-        {'name': "chr3", 'sequenceLength': 198022430},
-        {'name': "chr4", 'sequenceLength': 191154276},
-        {'name': "chr5", 'sequenceLength': 180915260},
-        {'name': "chr6", 'sequenceLength': 171115067},
-        {'name': "chr7", 'sequenceLength': 159138663},
-        {'name': "chr8", 'sequenceLength': 146364022},
-        {'name': "chr9", 'sequenceLength': 141213431},
-        {'name': "chr10", 'sequenceLength': 135534747},
-        {'name': "chr11", 'sequenceLength': 135006516},
-        {'name': "chr12", 'sequenceLength': 133851895},
-        {'name': "chr13", 'sequenceLength': 115169878},
-        {'name': "chr14", 'sequenceLength': 107349540},
-        {'name': "chr15", 'sequenceLength': 102531392},
-        {'name': "chr16", 'sequenceLength': 90354753},
-        {'name': "chr17", 'sequenceLength': 81195210},
-        {'name': "chr18", 'sequenceLength': 78077248},
-        {'name': "chr19", 'sequenceLength': 59128983},
-        {'name': "chr20", 'sequenceLength': 63025520},
-        {'name': "chr21", 'sequenceLength': 48129895},
-        {'name': "chr22", 'sequenceLength': 51304566},
-        {'name': "chrX", 'sequenceLength': 155270560},
-        {'name': "chrY", 'sequenceLength': 59373566},
-        ]
+      # default settings
+      settings = {
+        'readsetIds': ["CJ_ppJ-WCxD-2oXg667IhDM="],
+        'sequenceName': "chr20",
+        'sequenceStart': 68198,
+        'sequenceEnd': 68199,
+        }
 
       template = JINJA_ENVIRONMENT.get_template('index.html')
       self.response.out.write(template.render({
         "username": username,
-        "targets": targets
+        "targets": MainHandler.TARGETS,
+        "settings": settings,
       }))
     else:
       template = JINJA_ENVIRONMENT.get_template('grantaccess.html')
@@ -233,19 +241,54 @@ class MainHandler(BaseRequestHandler):
 
   @decorator.oauth_aware
   def post(self):
-
-    body = {
-      'readsetIds': [self.request.get("readsetId")],
-      'sequenceName': self.request.get('sequenceName'),
-      'sequenceStart': max(0, int(self.request.get('sequenceStart'))),
-      'sequenceEnd': int(self.request.get('sequenceEnd')),
-      }
+    content = None
+    body = None
 
     if self.request.get("submitRead"):
+      # Use the API to get the requested data.
+      body = {
+        'readsetIds': [self.request.get("readsetId")],
+        'sequenceName': self.request.get('sequenceName'),
+        'sequenceStart': max(0, int(self.request.get('sequenceStart'))),
+        'sequenceEnd': int(self.request.get('sequenceEnd')),
+        }
+
       logging.debug("Request Body:")
       logging.debug(body)
-      self.get_content("reads/search", body=body)
+      content = self.get_content("reads/search", body=body)
+      self.response.write(json.dumps(content))
       return
+    elif self.request.get("submitReadSample"):
+      # Read in local sample data.
+      body = {
+        'readsetIds': ["CJ_ppJ-WCxD-2oXg667IhDM="],
+        'sequenceName': "chr20",
+        'sequenceStart': 68198,
+        'sequenceEnd': 68199,
+        }
+      path = os.path.join(os.path.split(__file__)[0], 'static/listRead_SampleData.json')
+      file = open(path, 'r')
+      content = file.read()
+      file.close()
+      content = json.loads(content)
+
+    if content != None:
+      # Calculate results
+
+      results = [{"sequence": 68198, "coverage": 5}, {"sequence": 68199, "coverage": 11}]
+
+      # Render template with results.
+      username = users.User().nickname()
+      template = JINJA_ENVIRONMENT.get_template('index.html')
+      self.response.out.write(template.render({
+        "username": username,
+        "targets": MainHandler.TARGETS,
+        "settings": body,
+        "hasResults": len(results),
+        "results": results,
+      }))
+
+      #self.response.write(json.dumps(content))
 
       #pipeline = PhrasesPipeline(readset_id, seqname)
 

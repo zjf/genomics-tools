@@ -28,6 +28,8 @@ handlers:
 # Static files
 - url: /static
   static_dir: static
+  # Make them application readable so we can read the sample data.
+  application_readable: true
 
 - url: /mapreduce(/.*)?
   script: mapreduce.main.APP

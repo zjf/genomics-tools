@@ -23,6 +23,9 @@ limitations under the License.
   <!-- Optional theme -->
   <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
 
+  <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+
   <!-- Latest compiled and minified JavaScript -->
   <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 
@@ -43,46 +46,72 @@ limitations under the License.
           <h3 class="panel-title">Generate Coverage Statistics</h3>
         </div>
         <div class="panel-body">
-          Enter the parameters below to calculate the coverage statistics.
+          <b>Enter the parameters below to calculate the coverage statistics.</b>
           <br/><br/>
           <form action="/" method="POST" >
             <div class="row height-40">
               <div class="col-md-4">Readset Id:</div>
               <div class="col-md-8">
                 <input class="width-300" type="textfield" name="readsetId" id="readsetId"
-                       value="CJ_ppJ-WCxD-2oXg667IhDM=" /></div>
+                       value="{{ settings.readsetIds[0] }}" /></div>
             </div>
             <div class="row height-40">
               <div class="col-md-4">Sequence Name:</div>
               <div class="col-md-8">
                 <select name="sequenceName" id="sequenceName" >
                   {% for target in targets %}
-                  <option value="{{ target.name }}"{% if target.name == 'chr22'  %} selected{% endif %}>{{ target.name }}</option>
+                  <option value="{{ target.name }}"{% if target.name == settings.sequenceName %} selected{% endif %}>{{ target.name }}</option>
                   {% endfor %}
                 </select>
               </div>
             </div>
             <div class="row height-40">
               <div class="col-md-4">Sequence Start:</div>
-              <div class="col-md-8"><input type="textfield" id="sequenceStart" name="sequenceStart" value="68198" />
+              <div class="col-md-8"><input type="textfield" id="sequenceStart" name="sequenceStart"
+                                           value="{{ settings.sequenceStart }}" />
               </div>
             </div>
             <div class="row height-40">
               <div class="col-md-4">Sequence End:</div>
-              <div class="col-md-8"><input type="textfield" id="sequenceEnd" name="sequenceEnd" value="68199" /></div>
+              <div class="col-md-8"><input type="textfield" id="sequenceEnd" name="sequenceEnd"
+                                           value="{{ settings.sequenceEnd }}" /></div>
             </div>
             <div class="row height-40">
               <div class="col-md-4">&nbsp;</div>
               <div class="col-md-8">
                 <input class="btn btn-primary" type="submit" id="submitRead" name="submitRead" value="Submit">
-                &nbsp;(It may take some time).
+                &nbsp;It may be quicker to:&nbsp;
+                <input class="btn btn-info" type="submit" id="submitReadSample"
+                       name="submitReadSample" value="Use Sample Data">
               </div>
             </div>
-            </table>
           </form>
+          {% if hasResults %}
+          <b>Coverage Results:</b>
+          <br/><br/>
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Sequence</th>
+                  <th>Coverage</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for result in results %}
+                <tr>
+                  <td>{{ result.sequence }}</td>
+                  <td>{{ result.coverage }}</td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+           </div>
+          {% endif %}
         </div>
       </div>
     </div>
   </div>
+</div>
 </body>
 </html>
