@@ -146,13 +146,13 @@ class ApiException(Exception):
 
 class BaseRequestHandler(webapp2.RequestHandler):
   def handle_exception(self, exception, debug_mode):
-    if isinstance(exception, ApiException):
-      # ApiExceptions are expected, and will return nice error messages to the client
-      self.response.write(exception.message)
-      self.response.set_status(400)
-    else:
-      # All other exceptions are unexpected and should crash properly
-      return webapp2.RequestHandler.handle_exception(self, exception, debug_mode)
+   if isinstance(exception, ApiException):
+     # ApiExceptions are expected, and will return nice error messages to the client
+     self.response.write(exception.message)
+     self.response.set_status(400)
+   else:
+     # All other exceptions are unexpected and should crash properly
+     return webapp2.RequestHandler.handle_exception(self, exception, debug_mode)
 
   def get_content(self, path, method='POST', body=None):
     http = decorator.http()
@@ -170,18 +170,19 @@ class BaseRequestHandler(webapp2.RequestHandler):
     logging.debug("Content:")
     logging.debug(content)
 
+    # Parse the content as json.
     content = json.loads(content)
+
     if response.status == 404:
       raise ApiException('API not found')
     elif response.status == 400:
       raise ApiException('API request malformed')
     elif response.status != 200:
       if 'error' in content:
-        logging.info("Error Code: %s Message: %s" %
+        logging.error("Error Code: %s Message: %s" %
                      (content['error']['code'], content['error']['message']))
       raise ApiException("Something went wrong with the API call! "
                         "Please check the logs for more details.")
-
     return content
 
 class MainHandler(BaseRequestHandler):
@@ -216,24 +217,24 @@ class MainHandler(BaseRequestHandler):
     {'name': "chrY", 'sequenceLength': 59373566},
     ]
 
+  # Provide default settings for the user that they can then override.
+  DEFAULT_SETTINGS = {
+    'readsetIds': ["CJ_ppJ-WCxD-2oXg667IhDM="],
+    'sequenceName': "chr20",
+    'sequenceStart': 68198,
+    'sequenceEnd': 68199,
+    }
+
   @decorator.oauth_aware
   def get(self):
     if decorator.has_credentials():
       username = users.User().nickname()
 
-      # default settings
-      settings = {
-        'readsetIds': ["CJ_ppJ-WCxD-2oXg667IhDM="],
-        'sequenceName': "chr20",
-        'sequenceStart': 68198,
-        'sequenceEnd': 68199,
-        }
-
       template = JINJA_ENVIRONMENT.get_template('index.html')
       self.response.out.write(template.render({
         "username": username,
         "targets": MainHandler.TARGETS,
-        "settings": settings,
+        "settings": MainHandler.DEFAULT_SETTINGS,
       }))
     else:
       template = JINJA_ENVIRONMENT.get_template('grantaccess.html')
@@ -243,8 +244,10 @@ class MainHandler(BaseRequestHandler):
 
   @decorator.oauth_aware
   def post(self):
-    content = None
     body = None
+    content = None
+    coverage = None
+    errorMessage = None
 
     if self.request.get("submitRead"):
       # Use the API to get the requested data.
@@ -257,17 +260,16 @@ class MainHandler(BaseRequestHandler):
 
       logging.debug("Request Body:")
       logging.debug(body)
-      content = self.get_content("reads/search", body=body)
-      self.response.write(json.dumps(content))
-      return
+
+      # Make the call.
+      try:
+        content = self.get_content("reads/search", body=body)
+      except ApiException as exception:
+        errorMessage = exception.message
+
     elif self.request.get("submitReadSample"):
-      # Read in local sample data.
-      body = {
-        'readsetIds': ["CJ_ppJ-WCxD-2oXg667IhDM="],
-        'sequenceName': "chr20",
-        'sequenceStart': 68198,
-        'sequenceEnd': 68199,
-        }
+      # Read in local sample data which is based off of default settings.
+      body = MainHandler.DEFAULT_SETTINGS
       path = os.path.join(os.path.split(__file__)[0], 'static/listRead_SampleData.json')
       file = open(path, 'r')
       content = file.read()
@@ -278,16 +280,17 @@ class MainHandler(BaseRequestHandler):
       # Calculate results
       coverage = compute_coverage(content, body["sequenceStart"], body["sequenceEnd"])
 
-      # Render template with results.
-      username = users.User().nickname()
-      template = JINJA_ENVIRONMENT.get_template('index.html')
-      self.response.out.write(template.render({
-        "username": username,
-        "targets": MainHandler.TARGETS,
-        "settings": body,
-        "hasResults": len(coverage),
-        "results": coverage,
-      }))
+    # Render template with results or error.
+    username = users.User().nickname()
+    template = JINJA_ENVIRONMENT.get_template('index.html')
+    self.response.out.write(template.render({
+      "username": username,
+      "targets": MainHandler.TARGETS,
+      "settings": body,
+      "errorMessage": errorMessage,
+      "hasResults": len(coverage) if coverage else None,
+      "results": coverage,
+    }))
 
       #self.response.write(json.dumps(content))
 

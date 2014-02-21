@@ -86,6 +86,11 @@ limitations under the License.
               </div>
             </div>
           </form>
+          {% if errorMessage %}
+            <div class="alert alert-danger">
+              {{ errorMessage }}
+            </div>
+          {% endif %}
           {% if hasResults %}
           <b>Coverage Results:</b>
           <br/><br/>
