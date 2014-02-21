@@ -64,17 +64,7 @@ decorator = appengine.oauth2decorator_from_clientsecrets(
 
 
 class GenomicsCoverageStatistics(db.Model):
-  """A helper class that will hold metadata for the user's blobs.
-
-  Specifially, we want to keep track of who uploaded it, where they uploaded it
-  from (right now they can only upload from their computer, but in the future
-  urlfetch would be nice to add), and links to the results of their MR jobs. To
-  enable our querying to scan over our input data, we store keys in the form
-  'user/date/blob_key', where 'user' is the given user's e-mail address, 'date'
-  is the date and time that they uploaded the item on, and 'blob_key'
-  indicates the location in the Blobstore that the item can be found at. '/'
-  is not the actual separator between these values - we use '..' since it is
-  an illegal set of characters for an e-mail address to contain.
+  """Holds the calculated genomics coverage statistics.
   """
 
   __SEP = ".."
@@ -93,7 +83,7 @@ class GenomicsCoverageStatistics(db.Model):
     This is useful for table scanning, in conjunction with getLastKeyForReadsetId.
 
     Args:
-      username: The given user's e-mail address.
+      readsetId: The given ureadsetId.
     Returns:
       The internal key representing the earliest possible key that a user could
       own (although the value of this key is not able to be used for actual
@@ -255,10 +245,19 @@ class MainHandler(BaseRequestHandler):
         'sequenceEnd': int(self.request.get('sequenceEnd')),
         }
 
+      # If you are running the real pipeline map reduce then hit it.
+      if self.request.get('runPipeline'):
+        logging.debug("Running pipeline")
+        pipeline = CoveragePipeline(body["readsetIds"][0], body["sequenceName"], body["sequenceStart"],
+                                    body["sequenceEnd"])
+        pipeline.start()
+        self.redirect(pipeline.base_path + "/status?root=" + pipeline.pipeline_id)
+        return
+
       logging.debug("Request Body:")
       logging.debug(body)
 
-      # Make the call.
+      # Make the API call here to process directly.
       try:
         content = self.get_content("reads/search", body=body)
       except ApiException as exception:
@@ -273,6 +272,7 @@ class MainHandler(BaseRequestHandler):
       file.close()
       content = json.loads(content)
 
+    # If you have content then compute and store the results.
     if content != None:
       # Calculate results
       coverage = compute_coverage(content, body["sequenceStart"], body["sequenceEnd"])
@@ -288,11 +288,6 @@ class MainHandler(BaseRequestHandler):
       "errorMessage": errorMessage,
       "results": coverage,
     }))
-
-      #pipeline = PhrasesPipeline(readset_id, seqname)
-
-      #pipeline.start()
-      #self.redirect(pipeline.base_path + "/status?root=" + pipeline.pipeline_id)
 
 def compute_coverage(content, sequenceStart, sequenceEnd):
   """Takes the json results from the Genomics API call and computes coverage. """
@@ -347,7 +342,7 @@ def word_count_reduce(key, values):
   """Word count reduce function."""
   yield "%s: %d\n" % (key, len(values))
 
-class WordCountPipeline(base_handler.PipelineBase):
+class CoveragePipeline(base_handler.PipelineBase):
   """A pipeline to run Word count demo.
 
   Args:
@@ -355,22 +350,25 @@ class WordCountPipeline(base_handler.PipelineBase):
       text files inside.
   """
 
-  def run(self, filekey, blobkey):
-    logging.debug("filename is %s" % filekey)
+  def run(self, readsetId, sequenceName, sequenceStart, sequenceEnd):
+    logging.debug("Running Pipeline for readsetId %s" % readsetId)
     output = yield mapreduce_pipeline.MapreducePipeline(
-      "word_count",
+      "generate_coverage",
       "main.word_count_map",
       "main.word_count_reduce",
       "mapreduce.input_readers.BlobstoreZipInputReader",
       "mapreduce.output_writers.BlobstoreOutputWriter",
       mapper_params={
-        "blob_key": blobkey,
+        "readsetId": readsetId,
+        "sequenceName": sequenceName,
+        "sequenceStart": sequenceStart,
+        "sequenceEnd": sequenceEnd,
         },
       reducer_params={
         "mime_type": "text/plain",
         },
       shards=16)
-    yield StoreOutput(filekey, output)
+    #yield StoreOutput(filekey, output)
 
 
 class StoreOutput(base_handler.PipelineBase):
