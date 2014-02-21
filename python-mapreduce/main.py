@@ -243,6 +243,8 @@ class MainHandler(BaseRequestHandler):
         'sequenceName': self.request.get('sequenceName'),
         'sequenceStart': max(0, int(self.request.get('sequenceStart'))),
         'sequenceEnd': int(self.request.get('sequenceEnd')),
+        # May want to specfify just the fields that we need.
+        #'includeFields': ["position", "alignedSequence"]
         }
 
       # If you are running the real pipeline map reduce then hit it.
@@ -274,9 +276,12 @@ class MainHandler(BaseRequestHandler):
 
     # If you have content then compute and store the results.
     if content != None:
-      # Calculate results
-      coverage = compute_coverage(content, body["sequenceStart"], body["sequenceEnd"])
-      store_coverage(body["readsetIds"][0], body["sequenceName"], coverage)
+      if 'reads' in content:
+        # Calculate results
+        coverage = compute_coverage(content, body["sequenceStart"], body["sequenceEnd"])
+        store_coverage(body["readsetIds"][0], body["sequenceName"], coverage)
+      else:
+        errorMessage = "There API did not return any reads to process."
 
     # Render template with results or error.
     username = users.User().nickname()
@@ -359,10 +364,16 @@ class CoveragePipeline(base_handler.PipelineBase):
       "mapreduce.input_readers.BlobstoreZipInputReader",
       "mapreduce.output_writers.BlobstoreOutputWriter",
       mapper_params={
-        "readsetId": readsetId,
-        "sequenceName": sequenceName,
-        "sequenceStart": sequenceStart,
-        "sequenceEnd": sequenceEnd,
+        "input_reader": {
+          "readsetId": readsetId,
+          "sequenceName": sequenceName,
+          "sequenceStart": sequenceStart,
+          "sequenceEnd": sequenceEnd,
+          },
+        "output_writer": {
+          "readsetId": readsetId,
+          "sequenceName": sequenceName,
+          },
         },
       reducer_params={
         "mime_type": "text/plain",
