@@ -89,11 +89,12 @@ class ReadsetSearchHandler(BaseRequestHandler):
   def get(self):
     readset_id = self.request.get('readsetId')
     if not readset_id:
-      # TODO: Do real searching here
       content = [
         {'name': 'PG0001257', 'id': 'CJ_ppJ-WCxD-2oXg667IhDM='},
       ]
       self.response.write("%s" % json.dumps(content))
+      # TODO: Do real searching here
+      #self.get_content("readsets/search", body={'datasetIds': ['383928317087']}, method='GET')
       return
 
     # Single readset response
@@ -124,6 +125,8 @@ class ReadsetSearchHandler(BaseRequestHandler):
       {'name': "chrY", 'sequenceLength': 59373566},
     ]
     self.response.write("%s" % json.dumps(targets))
+    # TODO: Use the actual readset method
+    # self.get_content("readsets/%s" % readset_id, method='GET')
 
 class ReadSearchHandler(BaseRequestHandler):
 
