@@ -43,7 +43,7 @@ var readgraph = new function() {
   var xhrTimeout = null;
 
   // Dom elements
-  var svg, readDiv, spinner = null;
+  var svg, readGroup, readDiv, spinner = null;
 
   var getScaleLevel = function() {
     return Math.floor(Math.log(zoom.scale()) / Math.log(zoomLevelChange) + .1);
@@ -77,7 +77,7 @@ var readgraph = new function() {
 
     // Measurements
     svg = d3.select("#graph");
-    var text = addText('G', 0, 0);
+    var text = addText(svg, 'G', 0, 0);
     var bbox = text.node().getBBox();
     textWidth = bbox.width;
     textHeight = bbox.height;
@@ -97,7 +97,7 @@ var readgraph = new function() {
         .attr('class', 'axis');
 
     // Unsupported message
-    unsupportedMessage = addText('This zoom level is coming soon!', width/2, height/4);
+    unsupportedMessage = addText(svg, 'This zoom level is coming soon!', width/2, height/4);
 
     // Hover line
     var hoverline = svg.append("line")
@@ -123,6 +123,10 @@ var readgraph = new function() {
       hoverline.attr("x1", mouseX).attr("x2", mouseX)
     });
 
+    // Groups
+    readGroup = svg.append('g').attr('class', 'readGroup');
+    var zoomGroup = svg.append('g').attr('class', 'zoomGroup');
+
     // Zooming
     var changeZoomLevel = function(levelChange) {
       var newZoom = zoom.scale();
@@ -145,22 +149,22 @@ var readgraph = new function() {
     zoom = d3.behavior.zoom().size([width, height]).on("zoom", handleZoom);
     svg.call(zoom);
 
-    addImage('zoom-bar.png', 10, 201, 7, 10);
-    addImage('zoom-level.png', 22, 15, 2, 183, null, 'zoomLevel');
-    addImage('zoom-plus.png', 25, 25, 0, 10, function() {
+    addImage(zoomGroup, 'zoom-bar.png', 10, 201, 7, 10);
+    addImage(zoomGroup, 'zoom-level.png', 22, 15, 2, 183, null, 'zoomLevel');
+    addImage(zoomGroup, 'zoom-plus.png', 25, 25, 0, 10, function() {
       changeZoomLevel(1);
     });
-    addImage('zoom-minus.png', 25, 25, 0, 200, function() {
+    addImage(zoomGroup, 'zoom-minus.png', 25, 25, 0, 200, function() {
       changeZoomLevel(-1);
     });
     var zoomTextX = 23;
-    addText('Bases', zoomTextX, 50);
-    addText('Reads', zoomTextX, 98);
-    addText('Coverage', zoomTextX, 147);
-    addText('Summary', zoomTextX, 195);
+    addText(zoomGroup, 'Bases', zoomTextX, 50);
+    addText(zoomGroup, 'Reads', zoomTextX, 98);
+    addText(zoomGroup, 'Coverage', zoomTextX, 147);
+    addText(zoomGroup, 'Summary', zoomTextX, 195);
 
     // Spinner
-    spinner = addImage('spinner.gif', 16, 16, width - 16, 0);
+    spinner = addImage(readGroup, 'spinner.gif', 16, 16, width - 16, 0);
     spinner.style('display', 'none');
   };
 
@@ -180,16 +184,16 @@ var readgraph = new function() {
     moveTosequencePosition(position);
   };
 
-  var addImage = function(name, width, height, x, y, opt_handler, opt_class) {
-    return svg.append('image').attr('xlink:href', '/static/img/' + name)
+  var addImage = function(parent, name, width, height, x, y, opt_handler, opt_class) {
+    return parent.append('image').attr('xlink:href', '/static/img/' + name)
         .attr('width', width).attr('height', height)
         .attr('x', x).attr('y', y)
         .on("mouseup", opt_handler || function(){})
         .attr('class', opt_class || '');
   };
 
-  var addText = function(name, x, y) {
-    return svg.append('text').text(name).attr('x', x).attr('y', y);
+  var addText = function(parent, name, x, y) {
+    return parent.append('text').text(name).attr('x', x).attr('y', y);
   };
 
   var selectSequence = function(sequence) {
@@ -197,7 +201,6 @@ var readgraph = new function() {
     $('.sequence').removeClass('active');
     $('#sequence-' + sequence.name).addClass('active');
     $('#graph').show();
-    $('#circleGraph').hide();
     if (!setupRun) {
       setup();
     }
@@ -244,7 +247,7 @@ var readgraph = new function() {
     var readView = scaleLevel > 3;
     var baseView = scaleLevel > 5;
 
-    var reads = svg.selectAll(".read");
+    var reads = readGroup.selectAll(".read");
     toggleVisibility(unsupportedMessage, summaryView || coverageView);
     toggleVisibility(reads, readView);
 
@@ -273,7 +276,7 @@ var readgraph = new function() {
               return x(data.rx) + textWidth;
             })
             .attr("y", function(data, i) {
-              return y(data.ry) + textHeight;
+              return y(data.ry) + textHeight/2;
             });
       }
     }
@@ -331,45 +334,28 @@ var readgraph = new function() {
   // Read details
   var showRead = function(read, i) {
     readDiv.empty().show();
+
     $("<h4/>").text("Read: " + read.qname).appendTo(readDiv);
     var dl = $("<dl/>").addClass("dl").appendTo(readDiv);
-    $("<dt/>").text("Position").appendTo(dl);
-    $("<dd/>").text(read.position).appendTo(dl);
-    $("<dt/>").text("Length").appendTo(dl);
-    $("<dd/>").text(read.length).appendTo(dl);
-    $("<dt/>").text("Mapping quality").appendTo(dl);
-    $("<dd/>").text(read.mappingQuality).appendTo(dl);
-    $("<dt/>").text("Cigar").appendTo(dl);
-    $("<dd/>").text(read.cigar).appendTo(dl);
-//    $("<dt/>").text("Y Order").appendTo(dl);
-//    $("<dd/>").text(read.yOrder).appendTo(dl);
-//    $("<dt/>").text("End").appendTo(dl);
-//    $("<dd/>").text(read.end).appendTo(dl);
-//    $("<dt/>").text("Index").appendTo(dl);
-//    $("<dd/>").text(read.index).appendTo(dl);
+
+    var addField = function(title, field) {
+      if (field) {
+        $("<dt/>").text(title).appendTo(dl);
+        $("<dd/>").text(field).appendTo(dl);
+      }
+    };
+
+    addField("Position", read.position);
+    addField("Length", read.length);
+    addField("Mate position", read.mateSegmentPosition);
+    addField("Mapping quality", read.mappingQuality);
+    addField("Cigar", read.cigar);
+
     d3.select(this).classed("selected", true);
   };
 
   var hideRead = function(read, i) {
     d3.select(this).classed("selected", false);
-  };
-
-  var setCoverage = function(sequenceStart, sequenceEnd, reads) {
-    var coverage = [];
-    $.each(reads, function(i, read) {
-      // TODO: Get this from the api rather than computing ourselves
-      var start = read.position - sequenceStart;
-      var end = start + read.alignedSequence.length;
-      for (i = start; i < end; i++) {
-        coverage[i] = (coverage[i] || 0) + 1;
-      }
-    });
-
-    for (var i = 0; i < coverage.length; i++) {
-      coverage[i] =  {cx: sequenceStart + i, cy: coverage[i] || 0};
-    }
-    svg.select('.coverage').datum(coverage);
-    updateDisplay();
   };
 
   var setYOrder = function(read, yOrder) {
@@ -384,7 +370,7 @@ var readgraph = new function() {
     var yTracks = [];
     $.each(reads, function(readi, read) {
       // Interpret the cigar
-      // TODO: Should this even use the cigar or just use a reference thing??
+      // TODO: Compare the read against a reference rather than relying on the cigar
       var bases = read.originalSequence.split('');
       var matches = read.cigar.match(cigarMatcher);
       var baseIndex = 0;
@@ -457,11 +443,11 @@ var readgraph = new function() {
 
     if (reads.length == 0) {
       // Update the data behind the graph
-      svg.selectAll('.read').remove();
+      readGroup.selectAll('.read').remove();
       return;
     }
 
-    var reads = svg.selectAll(".read").data(reads, function(read){return read.id;});
+    var reads = readGroup.selectAll(".read").data(reads, function(read){return read.id;});
 
     reads.enter().append("g")
         .attr('class', 'read')
@@ -497,12 +483,6 @@ var readgraph = new function() {
 
   var queryReads = function(sequenceStart, sequenceEnd) {
     queryApi(sequenceStart, sequenceEnd, 'reads', setReads);
-  };
-
-  var queryCoverage = function(sequenceStart, sequenceEnd) {
-    queryApi(sequenceStart, sequenceEnd, 'coverage', function(reads) {
-      setCoverage(sequenceStart, sequenceEnd, reads);
-    });
   };
 
   var lastQueryParams = null;
