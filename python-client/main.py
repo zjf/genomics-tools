@@ -89,12 +89,7 @@ class ReadsetSearchHandler(BaseRequestHandler):
   def get(self):
     readset_id = self.request.get('readsetId')
     if not readset_id:
-      content = [
-        {'name': 'PG0001257', 'id': 'CJ_ppJ-WCxD-2oXg667IhDM='},
-      ]
-      self.response.write("%s" % json.dumps(content))
-      # TODO: Do real searching here
-      #self.get_content("readsets/search", body={'datasetIds': ['383928317087']}, method='GET')
+      self.get_content("readsets/search", body={'datasetIds': ['383928317087']})
       return
 
     # Single readset response

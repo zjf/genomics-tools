@@ -393,7 +393,7 @@ var readgraph = new function() {
           case 'H':
           case 'P':
             // We don't display clipped sequences right now
-            continue;
+            break;
           case 'D':
           case 'N':
             // Deletions get placeholders inserted
@@ -404,7 +404,7 @@ var readgraph = new function() {
                 'qual': 100 // TODO: What is the qual here??
               });
             }
-            continue;
+            break;
           case 'I': // TODO: What should an insertion look like?
           case 'x': // TODO: Color these differently?
           case 'M':
@@ -418,7 +418,7 @@ var readgraph = new function() {
               });
               baseIndex++;
             }
-            continue;
+            break;
         }
       }
 

@@ -83,7 +83,7 @@ function searchReadsets(button) {
   $.getJSON('/api/readsets')
       .done(function(res) {
         var div = $('#readsetResults').empty();
-        $.each(res, function(i, data) {
+        $.each(res.readsets, function(i, data) {
           $('<a/>', {'href': '#', 'class': 'list-group-item'}).text(data.name).appendTo(div).click(function() {
             addReadset(data.name, data.id);
           });
