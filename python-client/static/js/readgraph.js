@@ -384,6 +384,15 @@ var readgraph = new function() {
         return;
       }
 
+      var addLetter = function(type, letter, qual) {
+        read.readPieces.push({
+          'letter' : letter,
+          'rx': read.position + read.readPieces.length,
+          'qual': qual,
+          'cigarType': type
+        });
+      };
+
       for (var m = 0; m < matches.length; m++) {
         var match = matches[m];
         var baseCount = parseInt(match);
@@ -398,24 +407,19 @@ var readgraph = new function() {
           case 'N':
             // Deletions get placeholders inserted
             for (var b = 0; b < baseCount; b++) {
-              read.readPieces.push({
-                'letter' : '-',
-                'rx': read.position + read.readPieces.length,
-                'qual': 100 // TODO: What is the qual here??
-              });
+              addLetter(baseType, '-', 100);
             }
             break;
+          case 'S': // TODO: Reveal this skipped data somewhere
+            baseIndex += baseCount;
+            break;
           case 'I': // TODO: What should an insertion look like?
-          case 'x': // TODO: Color these differently?
+          case 'x': // TODO: Color these differently
           case 'M':
           case '=':
-          case 'S': // TODO: Are we suppose to hide clipped bases from the ui?
+            // Matches and insertions get displayed
             for (var j = 0; j < baseCount; j++) {
-              read.readPieces.push({
-                'letter' : bases[baseIndex],
-                'rx': read.position + read.readPieces.length,
-                'qual': read.qual.charCodeAt(baseIndex) - 33
-              });
+              addLetter(baseType, bases[baseIndex], read.qual.charCodeAt(baseIndex) - 33);
               baseIndex++;
             }
             break;
