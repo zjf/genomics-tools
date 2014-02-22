@@ -512,7 +512,7 @@ var readgraph = new function() {
     $.getJSON(url, queryParams)
         .done(function(res) {
           lastQueryParams = queryParams;
-          var reads = (res.reads || []).concat(opt_reads || []);
+          var reads = (opt_reads || []).concat(res.reads || []);
           handler(reads);
 
           if (res.nextPageToken) {
