@@ -16,3 +16,13 @@ feature of Google App Engine to do complex calculations over API data.
 
 * **readstore-local** implements the Genomics API locally, reading its data from a local
 <a href="http://samtools.sourceforge.net/SAMv1.pdf">BAM file</a>.
+
+
+### Contributing changes
+
+* See [CONTRIB.md](CONTRIB.md)
+
+
+### Licensing
+
+* See [LICENSE](LICENSE)
