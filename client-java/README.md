@@ -1,4 +1,4 @@
-java-client
+client-java
 ==============
 
 ###Getting started
@@ -8,7 +8,7 @@ This java client allows users to call the <a href="https://developers.google.com
 * To use, first build the client using <a href="http://maven.apache.org/download.cgi">Apache Maven</a>:
 
 ```
-cd genomics-tools/java-client
+cd genomics-tools/client-java
 mvn package
 cd target
 ```
