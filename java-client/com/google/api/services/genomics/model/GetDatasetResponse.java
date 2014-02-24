@@ -36,8 +36,8 @@ public final class GetDatasetResponse extends com.google.api.client.json.Generic
   private java.lang.String id;
 
   /**
-   * Flag indicating whether or not a dataset is public. If a dataset is not public, it inherits
-   * permissions from its project.
+   * Flag indicating whether or not a dataset is publicly viewable. If a dataset is not public, it
+   * inherits viewing permissions from its project.
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
@@ -68,8 +68,8 @@ public final class GetDatasetResponse extends com.google.api.client.json.Generic
   }
 
   /**
-   * Flag indicating whether or not a dataset is public. If a dataset is not public, it inherits
-   * permissions from its project.
+   * Flag indicating whether or not a dataset is publicly viewable. If a dataset is not public, it
+   * inherits viewing permissions from its project.
    * @return value or {@code null} for none
    */
   public java.lang.Boolean getIsPublic() {
@@ -77,8 +77,8 @@ public final class GetDatasetResponse extends com.google.api.client.json.Generic
   }
 
   /**
-   * Flag indicating whether or not a dataset is public. If a dataset is not public, it inherits
-   * permissions from its project.
+   * Flag indicating whether or not a dataset is publicly viewable. If a dataset is not public, it
+   * inherits viewing permissions from its project.
    * @param isPublic isPublic or {@code null} for none
    */
   public GetDatasetResponse setIsPublic(java.lang.Boolean isPublic) {

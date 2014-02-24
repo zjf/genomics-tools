@@ -33,10 +33,10 @@ import com.google.api.services.genomics.model.GetJobResponse;
 import com.google.api.services.genomics.model.GetReadsetResponse;
 import com.google.api.services.genomics.model.ImportReadsetsRequest;
 import com.google.api.services.genomics.model.ImportReadsetsResponse;
-import com.google.api.services.genomics.model.ListReadsetsRequest;
-import com.google.api.services.genomics.model.ListReadsetsResponse;
 import com.google.api.services.genomics.model.ListReadsRequest;
 import com.google.api.services.genomics.model.ListReadsResponse;
+import com.google.api.services.genomics.model.ListReadsetsRequest;
+import com.google.api.services.genomics.model.ListReadsetsResponse;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -328,7 +328,7 @@ public class GenomicsSample {
 
     ListReadsetsRequest content = new ListReadsetsRequest()
         .setDatasetIds(cmdLine.datasetIds);
-    ListReadsetsResponse result = genomics.readsets().list(content).execute();
+    ListReadsetsResponse result = genomics.readsets().search(content).execute();
     System.out.println("result: " + result);
   }
 
@@ -376,7 +376,7 @@ public class GenomicsSample {
     }
 
     // Invoke query and get response
-    ListReadsResponse result = genomics.reads().list(content).execute();
+    ListReadsResponse result = genomics.reads().search(content).execute();
     System.out.println("result: " + result);
   }
 }

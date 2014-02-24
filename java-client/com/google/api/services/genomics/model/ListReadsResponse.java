@@ -29,16 +29,9 @@ package com.google.api.services.genomics.model;
 public final class ListReadsResponse extends com.google.api.client.json.GenericJson {
 
   /**
-   * The approximate number of reads that match this query. Use this in conjunction with the
-   * nextPageToken to paginate through results.
-   * The value may be {@code null}.
-   */
-  @com.google.api.client.util.Key @com.google.api.client.json.JsonString
-  private java.math.BigInteger count;
-
-  /**
    * The continuation token, which is used to page through large result sets. Provide this value in
-   * a subsequent request to return the next page of results.
+   * a subsequent request to return the next page of results. This field will be empty if there
+   * aren't any additional results.
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
@@ -53,27 +46,9 @@ public final class ListReadsResponse extends com.google.api.client.json.GenericJ
   private java.util.List<Read> reads;
 
   /**
-   * The approximate number of reads that match this query. Use this in conjunction with the
-   * nextPageToken to paginate through results.
-   * @return value or {@code null} for none
-   */
-  public java.math.BigInteger getCount() {
-    return count;
-  }
-
-  /**
-   * The approximate number of reads that match this query. Use this in conjunction with the
-   * nextPageToken to paginate through results.
-   * @param count count or {@code null} for none
-   */
-  public ListReadsResponse setCount(java.math.BigInteger count) {
-    this.count = count;
-    return this;
-  }
-
-  /**
    * The continuation token, which is used to page through large result sets. Provide this value in
-   * a subsequent request to return the next page of results.
+   * a subsequent request to return the next page of results. This field will be empty if there
+   * aren't any additional results.
    * @return value or {@code null} for none
    */
   public java.lang.String getNextPageToken() {
@@ -82,7 +57,8 @@ public final class ListReadsResponse extends com.google.api.client.json.GenericJ
 
   /**
    * The continuation token, which is used to page through large result sets. Provide this value in
-   * a subsequent request to return the next page of results.
+   * a subsequent request to return the next page of results. This field will be empty if there
+   * aren't any additional results.
    * @param nextPageToken nextPageToken or {@code null} for none
    */
   public ListReadsResponse setNextPageToken(java.lang.String nextPageToken) {

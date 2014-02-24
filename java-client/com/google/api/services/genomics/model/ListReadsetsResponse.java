@@ -30,7 +30,8 @@ public final class ListReadsetsResponse extends com.google.api.client.json.Gener
 
   /**
    * The continuation token, which is used to page through large result sets. Provide this value in
-   * a subsequent request to return the next page of results.
+   * a subsequent request to return the next page of results. This field will be empty if there
+   * aren't any additional results.
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
@@ -45,7 +46,8 @@ public final class ListReadsetsResponse extends com.google.api.client.json.Gener
 
   /**
    * The continuation token, which is used to page through large result sets. Provide this value in
-   * a subsequent request to return the next page of results.
+   * a subsequent request to return the next page of results. This field will be empty if there
+   * aren't any additional results.
    * @return value or {@code null} for none
    */
   public java.lang.String getNextPageToken() {
@@ -54,7 +56,8 @@ public final class ListReadsetsResponse extends com.google.api.client.json.Gener
 
   /**
    * The continuation token, which is used to page through large result sets. Provide this value in
-   * a subsequent request to return the next page of results.
+   * a subsequent request to return the next page of results. This field will be empty if there
+   * aren't any additional results.
    * @param nextPageToken nextPageToken or {@code null} for none
    */
   public ListReadsetsResponse setNextPageToken(java.lang.String nextPageToken) {

@@ -36,21 +36,14 @@ public final class HeaderSection extends com.google.api.client.json.GenericJson 
   private java.util.List<java.lang.String> comments;
 
   /**
-   * Unique identifier for this BAM file. The same as Read.file_id.
-   * The value may be {@code null}.
-   */
-  @com.google.api.client.util.Key @com.google.api.client.json.JsonString
-  private java.math.BigInteger fileId;
-
-  /**
-   * Human readable name of the genome.
+   * The file uri that this data was imported from.
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private java.lang.String genomeName;
+  private java.lang.String fileUri;
 
   /**
-   * (@HD) The header line. May not need to be repeated.
+   * (@HD) The header line.
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
@@ -101,41 +94,24 @@ public final class HeaderSection extends com.google.api.client.json.GenericJson 
   }
 
   /**
-   * Unique identifier for this BAM file. The same as Read.file_id.
+   * The file uri that this data was imported from.
    * @return value or {@code null} for none
    */
-  public java.math.BigInteger getFileId() {
-    return fileId;
+  public java.lang.String getFileUri() {
+    return fileUri;
   }
 
   /**
-   * Unique identifier for this BAM file. The same as Read.file_id.
-   * @param fileId fileId or {@code null} for none
+   * The file uri that this data was imported from.
+   * @param fileUri fileUri or {@code null} for none
    */
-  public HeaderSection setFileId(java.math.BigInteger fileId) {
-    this.fileId = fileId;
+  public HeaderSection setFileUri(java.lang.String fileUri) {
+    this.fileUri = fileUri;
     return this;
   }
 
   /**
-   * Human readable name of the genome.
-   * @return value or {@code null} for none
-   */
-  public java.lang.String getGenomeName() {
-    return genomeName;
-  }
-
-  /**
-   * Human readable name of the genome.
-   * @param genomeName genomeName or {@code null} for none
-   */
-  public HeaderSection setGenomeName(java.lang.String genomeName) {
-    this.genomeName = genomeName;
-    return this;
-  }
-
-  /**
-   * (@HD) The header line. May not need to be repeated.
+   * (@HD) The header line.
    * @return value or {@code null} for none
    */
   public java.util.List<Header> getHeaders() {
@@ -143,7 +119,7 @@ public final class HeaderSection extends com.google.api.client.json.GenericJson 
   }
 
   /**
-   * (@HD) The header line. May not need to be repeated.
+   * (@HD) The header line.
    * @param headers headers or {@code null} for none
    */
   public HeaderSection setHeaders(java.util.List<Header> headers) {

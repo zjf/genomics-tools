@@ -43,6 +43,14 @@ public final class GetJobResponse extends com.google.api.client.json.GenericJson
   private java.lang.String id;
 
   /**
+   * If this Job represents an import, this field will contain the IDs of the objects which were
+   * successfully imported.
+   * The value may be {@code null}.
+   */
+  @com.google.api.client.util.Key
+  private java.util.List<java.lang.String> importedIds;
+
+  /**
    * The Google Cloud Console project number that this job belongs to.
    * The value may be {@code null}.
    */
@@ -87,6 +95,25 @@ public final class GetJobResponse extends com.google.api.client.json.GenericJson
    */
   public GetJobResponse setId(java.lang.String id) {
     this.id = id;
+    return this;
+  }
+
+  /**
+   * If this Job represents an import, this field will contain the IDs of the objects which were
+   * successfully imported.
+   * @return value or {@code null} for none
+   */
+  public java.util.List<java.lang.String> getImportedIds() {
+    return importedIds;
+  }
+
+  /**
+   * If this Job represents an import, this field will contain the IDs of the objects which were
+   * successfully imported.
+   * @param importedIds importedIds or {@code null} for none
+   */
+  public GetJobResponse setImportedIds(java.util.List<java.lang.String> importedIds) {
+    this.importedIds = importedIds;
     return this;
   }
 

@@ -29,122 +29,157 @@ package com.google.api.services.genomics.model;
 public final class Read extends com.google.api.client.json.GenericJson {
 
   /**
-   * (SEQ) The aligned sequence.
+   * The originalBases after the cigar field has been applied. Deletions are represented with '-'
+   * and insertions are omitted.
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private java.lang.String alignedSequence;
+  private java.lang.String alignedBases;
 
   /**
-   * (CIGAR) CIGAR string.
+   * Represents the quality of each base in this read. Each character represents one base. To get
+   * the quality, take the ASCII value of the character and subtract 33.(QUAL)
+   * The value may be {@code null}.
+   */
+  @com.google.api.client.util.Key
+  private java.lang.String baseQuality;
+
+  /**
+   * A condensed representation of how this read matches up to the reference. (CIGAR)
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
   private java.lang.String cigar;
 
   /**
-   * Unique identifier for the containing BAM file.
-   * The value may be {@code null}.
-   */
-  @com.google.api.client.util.Key @com.google.api.client.json.JsonString
-  private java.math.BigInteger fileId;
-
-  /**
-   * (FLAG) Bitwise flag.
+   * Each bit of this number has a different meaning if enabled. See the full BAM spec for more
+   * details. (FLAG)
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
   private java.lang.Integer flags;
 
   /**
-   * (MAPQ) Mapping quality.
+   * The read ID.
+   * The value may be {@code null}.
+   */
+  @com.google.api.client.util.Key
+  private java.lang.String id;
+
+  /**
+   * A score up to 255 that represents how likely this read's aligned position is correct. A higher
+   * value is better. (MAPQ)
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
   private java.lang.Integer mappingQuality;
 
   /**
-   * (PNEXT) Position of the primary alignment of the next read in the template.
+   * The 1-based start position of the paired read. (PNEXT)
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private java.lang.Integer mateSegmentPosition;
+  private java.lang.Integer matePosition;
 
   /**
-   * (RNEXT) Reference sequence name of the primary alignment of the next read in the template.
+   * The name of the sequence that the paired read is aligned to. This is usually the same as
+   * referenceSequenceName. (RNEXT)
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private java.lang.String mateSegmentReferenceName;
+  private java.lang.String mateReferenceSequenceName;
 
   /**
-   * (SEQ) The original sequence.
+   * The name of the read. When imported from a BAM file, this is the query template name. (QNAME)
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private java.lang.String originalSequence;
+  private java.lang.String name;
 
   /**
-   * (POS) 1-based leftmost mapping position of the first matching base.
+   * The list of bases that this read represents (e.g. 'CATCGA'). (SEQ)
+   * The value may be {@code null}.
+   */
+  @com.google.api.client.util.Key
+  private java.lang.String originalBases;
+
+  /**
+   * The 1-based start position of the aligned read. If the first base starts at the very beginning
+   * of the reference sequence, then the position would be '1'. (POS)
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
   private java.lang.Integer position;
 
   /**
-   * (QNAME) Query template name.
+   * The ID of the readset this read belongs to.
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private java.lang.String qname;
+  private java.lang.String readsetId;
 
   /**
-   * (QUAL) ASCII of base quality plus 33.
-   * The value may be {@code null}.
-   */
-  @com.google.api.client.util.Key
-  private java.lang.String qual;
-
-  /**
-   * (RNAME) Reference sequence name of the alignment.
+   * The name of the sequence that this read is aligned to. This would be 'X' for the X Chromosome
+   * or '20' for Chromosome 20. (RNAME)
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
   private java.lang.String referenceSequenceName;
 
   /**
-   * (TAG) Optional fields.
+   * A list of additional read information. (TAG)
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
   private java.util.List<Tag> tags;
 
   /**
-   * (TLEN) Signed observed template length.
+   * Length of the original piece of dna that produced both this read and the paired read. (TLEN)
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
   private java.lang.Integer templateLength;
 
   /**
-   * (SEQ) The aligned sequence.
+   * The originalBases after the cigar field has been applied. Deletions are represented with '-'
+   * and insertions are omitted.
    * @return value or {@code null} for none
    */
-  public java.lang.String getAlignedSequence() {
-    return alignedSequence;
+  public java.lang.String getAlignedBases() {
+    return alignedBases;
   }
 
   /**
-   * (SEQ) The aligned sequence.
-   * @param alignedSequence alignedSequence or {@code null} for none
+   * The originalBases after the cigar field has been applied. Deletions are represented with '-'
+   * and insertions are omitted.
+   * @param alignedBases alignedBases or {@code null} for none
    */
-  public Read setAlignedSequence(java.lang.String alignedSequence) {
-    this.alignedSequence = alignedSequence;
+  public Read setAlignedBases(java.lang.String alignedBases) {
+    this.alignedBases = alignedBases;
     return this;
   }
 
   /**
-   * (CIGAR) CIGAR string.
+   * Represents the quality of each base in this read. Each character represents one base. To get
+   * the quality, take the ASCII value of the character and subtract 33.(QUAL)
+   * @return value or {@code null} for none
+   */
+  public java.lang.String getBaseQuality() {
+    return baseQuality;
+  }
+
+  /**
+   * Represents the quality of each base in this read. Each character represents one base. To get
+   * the quality, take the ASCII value of the character and subtract 33.(QUAL)
+   * @param baseQuality baseQuality or {@code null} for none
+   */
+  public Read setBaseQuality(java.lang.String baseQuality) {
+    this.baseQuality = baseQuality;
+    return this;
+  }
+
+  /**
+   * A condensed representation of how this read matches up to the reference. (CIGAR)
    * @return value or {@code null} for none
    */
   public java.lang.String getCigar() {
@@ -152,7 +187,7 @@ public final class Read extends com.google.api.client.json.GenericJson {
   }
 
   /**
-   * (CIGAR) CIGAR string.
+   * A condensed representation of how this read matches up to the reference. (CIGAR)
    * @param cigar cigar or {@code null} for none
    */
   public Read setCigar(java.lang.String cigar) {
@@ -161,24 +196,8 @@ public final class Read extends com.google.api.client.json.GenericJson {
   }
 
   /**
-   * Unique identifier for the containing BAM file.
-   * @return value or {@code null} for none
-   */
-  public java.math.BigInteger getFileId() {
-    return fileId;
-  }
-
-  /**
-   * Unique identifier for the containing BAM file.
-   * @param fileId fileId or {@code null} for none
-   */
-  public Read setFileId(java.math.BigInteger fileId) {
-    this.fileId = fileId;
-    return this;
-  }
-
-  /**
-   * (FLAG) Bitwise flag.
+   * Each bit of this number has a different meaning if enabled. See the full BAM spec for more
+   * details. (FLAG)
    * @return value or {@code null} for none
    */
   public java.lang.Integer getFlags() {
@@ -186,7 +205,8 @@ public final class Read extends com.google.api.client.json.GenericJson {
   }
 
   /**
-   * (FLAG) Bitwise flag.
+   * Each bit of this number has a different meaning if enabled. See the full BAM spec for more
+   * details. (FLAG)
    * @param flags flags or {@code null} for none
    */
   public Read setFlags(java.lang.Integer flags) {
@@ -195,7 +215,25 @@ public final class Read extends com.google.api.client.json.GenericJson {
   }
 
   /**
-   * (MAPQ) Mapping quality.
+   * The read ID.
+   * @return value or {@code null} for none
+   */
+  public java.lang.String getId() {
+    return id;
+  }
+
+  /**
+   * The read ID.
+   * @param id id or {@code null} for none
+   */
+  public Read setId(java.lang.String id) {
+    this.id = id;
+    return this;
+  }
+
+  /**
+   * A score up to 255 that represents how likely this read's aligned position is correct. A higher
+   * value is better. (MAPQ)
    * @return value or {@code null} for none
    */
   public java.lang.Integer getMappingQuality() {
@@ -203,7 +241,8 @@ public final class Read extends com.google.api.client.json.GenericJson {
   }
 
   /**
-   * (MAPQ) Mapping quality.
+   * A score up to 255 that represents how likely this read's aligned position is correct. A higher
+   * value is better. (MAPQ)
    * @param mappingQuality mappingQuality or {@code null} for none
    */
   public Read setMappingQuality(java.lang.Integer mappingQuality) {
@@ -212,58 +251,78 @@ public final class Read extends com.google.api.client.json.GenericJson {
   }
 
   /**
-   * (PNEXT) Position of the primary alignment of the next read in the template.
+   * The 1-based start position of the paired read. (PNEXT)
    * @return value or {@code null} for none
    */
-  public java.lang.Integer getMateSegmentPosition() {
-    return mateSegmentPosition;
+  public java.lang.Integer getMatePosition() {
+    return matePosition;
   }
 
   /**
-   * (PNEXT) Position of the primary alignment of the next read in the template.
-   * @param mateSegmentPosition mateSegmentPosition or {@code null} for none
+   * The 1-based start position of the paired read. (PNEXT)
+   * @param matePosition matePosition or {@code null} for none
    */
-  public Read setMateSegmentPosition(java.lang.Integer mateSegmentPosition) {
-    this.mateSegmentPosition = mateSegmentPosition;
+  public Read setMatePosition(java.lang.Integer matePosition) {
+    this.matePosition = matePosition;
     return this;
   }
 
   /**
-   * (RNEXT) Reference sequence name of the primary alignment of the next read in the template.
+   * The name of the sequence that the paired read is aligned to. This is usually the same as
+   * referenceSequenceName. (RNEXT)
    * @return value or {@code null} for none
    */
-  public java.lang.String getMateSegmentReferenceName() {
-    return mateSegmentReferenceName;
+  public java.lang.String getMateReferenceSequenceName() {
+    return mateReferenceSequenceName;
   }
 
   /**
-   * (RNEXT) Reference sequence name of the primary alignment of the next read in the template.
-   * @param mateSegmentReferenceName mateSegmentReferenceName or {@code null} for none
+   * The name of the sequence that the paired read is aligned to. This is usually the same as
+   * referenceSequenceName. (RNEXT)
+   * @param mateReferenceSequenceName mateReferenceSequenceName or {@code null} for none
    */
-  public Read setMateSegmentReferenceName(java.lang.String mateSegmentReferenceName) {
-    this.mateSegmentReferenceName = mateSegmentReferenceName;
+  public Read setMateReferenceSequenceName(java.lang.String mateReferenceSequenceName) {
+    this.mateReferenceSequenceName = mateReferenceSequenceName;
     return this;
   }
 
   /**
-   * (SEQ) The original sequence.
+   * The name of the read. When imported from a BAM file, this is the query template name. (QNAME)
    * @return value or {@code null} for none
    */
-  public java.lang.String getOriginalSequence() {
-    return originalSequence;
+  public java.lang.String getName() {
+    return name;
   }
 
   /**
-   * (SEQ) The original sequence.
-   * @param originalSequence originalSequence or {@code null} for none
+   * The name of the read. When imported from a BAM file, this is the query template name. (QNAME)
+   * @param name name or {@code null} for none
    */
-  public Read setOriginalSequence(java.lang.String originalSequence) {
-    this.originalSequence = originalSequence;
+  public Read setName(java.lang.String name) {
+    this.name = name;
     return this;
   }
 
   /**
-   * (POS) 1-based leftmost mapping position of the first matching base.
+   * The list of bases that this read represents (e.g. 'CATCGA'). (SEQ)
+   * @return value or {@code null} for none
+   */
+  public java.lang.String getOriginalBases() {
+    return originalBases;
+  }
+
+  /**
+   * The list of bases that this read represents (e.g. 'CATCGA'). (SEQ)
+   * @param originalBases originalBases or {@code null} for none
+   */
+  public Read setOriginalBases(java.lang.String originalBases) {
+    this.originalBases = originalBases;
+    return this;
+  }
+
+  /**
+   * The 1-based start position of the aligned read. If the first base starts at the very beginning
+   * of the reference sequence, then the position would be '1'. (POS)
    * @return value or {@code null} for none
    */
   public java.lang.Integer getPosition() {
@@ -271,7 +330,8 @@ public final class Read extends com.google.api.client.json.GenericJson {
   }
 
   /**
-   * (POS) 1-based leftmost mapping position of the first matching base.
+   * The 1-based start position of the aligned read. If the first base starts at the very beginning
+   * of the reference sequence, then the position would be '1'. (POS)
    * @param position position or {@code null} for none
    */
   public Read setPosition(java.lang.Integer position) {
@@ -280,69 +340,25 @@ public final class Read extends com.google.api.client.json.GenericJson {
   }
 
   /**
-   * (QNAME) Query template name.
+   * The ID of the readset this read belongs to.
    * @return value or {@code null} for none
    */
-  public java.lang.String getQname() {
-    return qname;
+  public java.lang.String getReadsetId() {
+    return readsetId;
   }
 
   /**
-   * (QNAME) Query template name.
-   * @param qname qname or {@code null} for none
+   * The ID of the readset this read belongs to.
+   * @param readsetId readsetId or {@code null} for none
    */
-  public Read setQname(java.lang.String qname) {
-    this.qname = qname;
+  public Read setReadsetId(java.lang.String readsetId) {
+    this.readsetId = readsetId;
     return this;
   }
 
   /**
-   * (QUAL) ASCII of base quality plus 33.
-   * @see #decodeQual()
-   * @return value or {@code null} for none
-   */
-  public java.lang.String getQual() {
-    return qual;
-  }
-
-  /**
-   * (QUAL) ASCII of base quality plus 33.
-   * @see #getQual()
-   * @return Base64 decoded value or {@code null} for none
-   *
-   * @since 1.14
-   */
-  public byte[] decodeQual() {
-    return com.google.api.client.util.Base64.decodeBase64(qual);
-  }
-
-  /**
-   * (QUAL) ASCII of base quality plus 33.
-   * @see #encodeQual()
-   * @param qual qual or {@code null} for none
-   */
-  public Read setQual(java.lang.String qual) {
-    this.qual = qual;
-    return this;
-  }
-
-  /**
-   * (QUAL) ASCII of base quality plus 33.
-   * @see #setQual()
-   *
-   * <p>
-   * The value is encoded Base64 or {@code null} for none.
-   * </p>
-   *
-   * @since 1.14
-   */
-  public Read encodeQual(byte[] qual) {
-    this.qual = com.google.api.client.util.Base64.encodeBase64URLSafeString(qual);
-    return this;
-  }
-
-  /**
-   * (RNAME) Reference sequence name of the alignment.
+   * The name of the sequence that this read is aligned to. This would be 'X' for the X Chromosome
+   * or '20' for Chromosome 20. (RNAME)
    * @return value or {@code null} for none
    */
   public java.lang.String getReferenceSequenceName() {
@@ -350,7 +366,8 @@ public final class Read extends com.google.api.client.json.GenericJson {
   }
 
   /**
-   * (RNAME) Reference sequence name of the alignment.
+   * The name of the sequence that this read is aligned to. This would be 'X' for the X Chromosome
+   * or '20' for Chromosome 20. (RNAME)
    * @param referenceSequenceName referenceSequenceName or {@code null} for none
    */
   public Read setReferenceSequenceName(java.lang.String referenceSequenceName) {
@@ -359,7 +376,7 @@ public final class Read extends com.google.api.client.json.GenericJson {
   }
 
   /**
-   * (TAG) Optional fields.
+   * A list of additional read information. (TAG)
    * @return value or {@code null} for none
    */
   public java.util.List<Tag> getTags() {
@@ -367,7 +384,7 @@ public final class Read extends com.google.api.client.json.GenericJson {
   }
 
   /**
-   * (TAG) Optional fields.
+   * A list of additional read information. (TAG)
    * @param tags tags or {@code null} for none
    */
   public Read setTags(java.util.List<Tag> tags) {
@@ -376,7 +393,7 @@ public final class Read extends com.google.api.client.json.GenericJson {
   }
 
   /**
-   * (TLEN) Signed observed template length.
+   * Length of the original piece of dna that produced both this read and the paired read. (TLEN)
    * @return value or {@code null} for none
    */
   public java.lang.Integer getTemplateLength() {
@@ -384,7 +401,7 @@ public final class Read extends com.google.api.client.json.GenericJson {
   }
 
   /**
-   * (TLEN) Signed observed template length.
+   * Length of the original piece of dna that produced both this read and the paired read. (TLEN)
    * @param templateLength templateLength or {@code null} for none
    */
   public Read setTemplateLength(java.lang.Integer templateLength) {
