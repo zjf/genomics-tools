@@ -43,7 +43,8 @@ public final class GetReadsetResponse extends com.google.api.client.json.Generic
   private java.lang.String datasetId;
 
   /**
-   * File information from the original import.
+   * File information from the original BAM import. See the BAM format specification for additional
+   * information on each field.
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
@@ -105,7 +106,8 @@ public final class GetReadsetResponse extends com.google.api.client.json.Generic
   }
 
   /**
-   * File information from the original import.
+   * File information from the original BAM import. See the BAM format specification for additional
+   * information on each field.
    * @return value or {@code null} for none
    */
   public java.util.List<HeaderSection> getFileData() {
@@ -113,7 +115,8 @@ public final class GetReadsetResponse extends com.google.api.client.json.Generic
   }
 
   /**
-   * File information from the original import.
+   * File information from the original BAM import. See the BAM format specification for additional
+   * information on each field.
    * @param fileData fileData or {@code null} for none
    */
   public GetReadsetResponse setFileData(java.util.List<HeaderSection> fileData) {

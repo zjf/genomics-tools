@@ -506,79 +506,80 @@ public class Genomics extends com.google.api.client.googleapis.services.json.Abs
     /**
      * Gets a list of reads matching the criteria.
      *
-     * Create a request for the method "reads.list".
+     * Create a request for the method "reads.search".
      *
      * This request holds the parameters needed by the genomics server.  After setting any optional
-     * parameters, call the {@link List#execute()} method to invoke the remote operation.
+     * parameters, call the {@link Search#execute()} method to invoke the remote operation.
      *
      * @param content the {@link com.google.api.services.genomics.model.ListReadsRequest}
      * @return the request
      */
-    public List list(com.google.api.services.genomics.model.ListReadsRequest content) throws java.io.IOException {
-      List result = new List(content);
+    public Search search(com.google.api.services.genomics.model.ListReadsRequest content) throws java.io.IOException {
+      Search result = new Search(content);
       initialize(result);
       return result;
     }
 
-    public class List extends GenomicsRequest<com.google.api.services.genomics.model.ListReadsResponse> {
+    public class Search extends GenomicsRequest<com.google.api.services.genomics.model.ListReadsResponse> {
 
       private static final String REST_PATH = "reads/search";
 
       /**
        * Gets a list of reads matching the criteria.
        *
-       * Create a request for the method "reads.list".
+       * Create a request for the method "reads.search".
        *
        * This request holds the parameters needed by the the genomics server.  After setting any
-       * optional parameters, call the {@link List#execute()} method to invoke the remote operation. <p>
-       * {@link List#initialize(com.google.api.client.googleapis.services.AbstractGoogleClientRequest)}
-       * must be called to initialize this instance immediately after invoking the constructor. </p>
+       * optional parameters, call the {@link Search#execute()} method to invoke the remote operation.
+       * <p> {@link
+       * Search#initialize(com.google.api.client.googleapis.services.AbstractGoogleClientRequest)} must
+       * be called to initialize this instance immediately after invoking the constructor. </p>
        *
        * @param content the {@link com.google.api.services.genomics.model.ListReadsRequest}
        * @since 1.13
        */
-      protected List(com.google.api.services.genomics.model.ListReadsRequest content) {
+      protected Search(com.google.api.services.genomics.model.ListReadsRequest content) {
         super(Genomics.this, "POST", REST_PATH, content, com.google.api.services.genomics.model.ListReadsResponse.class);
       }
 
       @Override
-      public List setAlt(java.lang.String alt) {
-        return (List) super.setAlt(alt);
+      public Search setAlt(java.lang.String alt) {
+        return (Search) super.setAlt(alt);
       }
 
       @Override
-      public List setFields(java.lang.String fields) {
-        return (List) super.setFields(fields);
+      public Search setFields(java.lang.String fields) {
+        return (Search) super.setFields(fields);
       }
 
       @Override
-      public List setKey(java.lang.String key) {
-        return (List) super.setKey(key);
+      public Search setKey(java.lang.String key) {
+        return (Search) super.setKey(key);
       }
 
       @Override
-      public List setOauthToken(java.lang.String oauthToken) {
-        return (List) super.setOauthToken(oauthToken);
+      public Search setOauthToken(java.lang.String oauthToken) {
+        return (Search) super.setOauthToken(oauthToken);
       }
 
       @Override
-      public List setPrettyPrint(java.lang.Boolean prettyPrint) {
-        return (List) super.setPrettyPrint(prettyPrint);
+      public Search setPrettyPrint(java.lang.Boolean prettyPrint) {
+        return (Search) super.setPrettyPrint(prettyPrint);
       }
 
       @Override
-      public List setQuotaUser(java.lang.String quotaUser) {
-        return (List) super.setQuotaUser(quotaUser);
+      public Search setQuotaUser(java.lang.String quotaUser) {
+        return (Search) super.setQuotaUser(quotaUser);
       }
 
       @Override
-      public List setUserIp(java.lang.String userIp) {
-        return (List) super.setUserIp(userIp);
+      public Search setUserIp(java.lang.String userIp) {
+        return (Search) super.setUserIp(userIp);
       }
 
       @Override
-      public List set(String parameterName, Object value) {
-        return (List) super.set(parameterName, value);
+      public Search set(String parameterName, Object value) {
+        return (Search) super.set(parameterName, value);
       }
     }
 
@@ -791,79 +792,80 @@ public class Genomics extends com.google.api.client.googleapis.services.json.Abs
     /**
      * Gets a list of readsets matching the criteria. Supports pagination and filtering by dataset.
      *
-     * Create a request for the method "readsets.list".
+     * Create a request for the method "readsets.search".
      *
      * This request holds the parameters needed by the genomics server.  After setting any optional
-     * parameters, call the {@link List#execute()} method to invoke the remote operation.
+     * parameters, call the {@link Search#execute()} method to invoke the remote operation.
      *
      * @param content the {@link com.google.api.services.genomics.model.ListReadsetsRequest}
      * @return the request
      */
-    public List list(com.google.api.services.genomics.model.ListReadsetsRequest content) throws java.io.IOException {
-      List result = new List(content);
+    public Search search(com.google.api.services.genomics.model.ListReadsetsRequest content) throws java.io.IOException {
+      Search result = new Search(content);
       initialize(result);
       return result;
     }
 
-    public class List extends GenomicsRequest<com.google.api.services.genomics.model.ListReadsetsResponse> {
+    public class Search extends GenomicsRequest<com.google.api.services.genomics.model.ListReadsetsResponse> {
 
       private static final String REST_PATH = "readsets/search";
 
       /**
        * Gets a list of readsets matching the criteria. Supports pagination and filtering by dataset.
        *
-       * Create a request for the method "readsets.list".
+       * Create a request for the method "readsets.search".
        *
        * This request holds the parameters needed by the the genomics server.  After setting any
-       * optional parameters, call the {@link List#execute()} method to invoke the remote operation. <p>
-       * {@link List#initialize(com.google.api.client.googleapis.services.AbstractGoogleClientRequest)}
-       * must be called to initialize this instance immediately after invoking the constructor. </p>
+       * optional parameters, call the {@link Search#execute()} method to invoke the remote operation.
+       * <p> {@link
+       * Search#initialize(com.google.api.client.googleapis.services.AbstractGoogleClientRequest)} must
+       * be called to initialize this instance immediately after invoking the constructor. </p>
        *
        * @param content the {@link com.google.api.services.genomics.model.ListReadsetsRequest}
        * @since 1.13
        */
-      protected List(com.google.api.services.genomics.model.ListReadsetsRequest content) {
+      protected Search(com.google.api.services.genomics.model.ListReadsetsRequest content) {
         super(Genomics.this, "POST", REST_PATH, content, com.google.api.services.genomics.model.ListReadsetsResponse.class);
       }
 
       @Override
-      public List setAlt(java.lang.String alt) {
-        return (List) super.setAlt(alt);
+      public Search setAlt(java.lang.String alt) {
+        return (Search) super.setAlt(alt);
       }
 
       @Override
-      public List setFields(java.lang.String fields) {
-        return (List) super.setFields(fields);
+      public Search setFields(java.lang.String fields) {
+        return (Search) super.setFields(fields);
       }
 
       @Override
-      public List setKey(java.lang.String key) {
-        return (List) super.setKey(key);
+      public Search setKey(java.lang.String key) {
+        return (Search) super.setKey(key);
       }
 
       @Override
-      public List setOauthToken(java.lang.String oauthToken) {
-        return (List) super.setOauthToken(oauthToken);
+      public Search setOauthToken(java.lang.String oauthToken) {
+        return (Search) super.setOauthToken(oauthToken);
       }
 
       @Override
-      public List setPrettyPrint(java.lang.Boolean prettyPrint) {
-        return (List) super.setPrettyPrint(prettyPrint);
+      public Search setPrettyPrint(java.lang.Boolean prettyPrint) {
+        return (Search) super.setPrettyPrint(prettyPrint);
       }
 
       @Override
-      public List setQuotaUser(java.lang.String quotaUser) {
-        return (List) super.setQuotaUser(quotaUser);
+      public Search setQuotaUser(java.lang.String quotaUser) {
+        return (Search) super.setQuotaUser(quotaUser);
       }
 
       @Override
-      public List setUserIp(java.lang.String userIp) {
-        return (List) super.setUserIp(userIp);
+      public Search setUserIp(java.lang.String userIp) {
+        return (Search) super.setUserIp(userIp);
       }
 
       @Override
-      public List set(String parameterName, Object value) {
-        return (List) super.set(parameterName, value);
+      public Search set(String parameterName, Object value) {
+        return (Search) super.set(parameterName, value);
       }
     }
 
