@@ -22,13 +22,9 @@ import json
 import logging
 import os
 import re
-import urllib
 import webapp2
 
-from google.appengine.ext import blobstore
 from google.appengine.ext import db
-
-from google.appengine.ext.webapp import blobstore_handlers
 
 from google.appengine.api import files
 from google.appengine.api import taskqueue
@@ -39,8 +35,11 @@ from google.appengine.api.urlfetch_errors import DeadlineExceededError
 from collections import defaultdict
 
 from mapreduce import base_handler
+from mapreduce import context
+from mapreduce import errors
+from mapreduce import input_readers
 from mapreduce import mapreduce_pipeline
-from mapreduce import operation as op
+from mapreduce import operation
 from mapreduce import shuffler
 
 from oauth2client import appengine
@@ -128,20 +127,38 @@ class GenomicsCoverageStatistics(db.Model):
     sep = GenomicsCoverageStatistics.__SEP
     return str(readsetId + sep + sequenceName + sep + str(sequence))
 
+
 class ApiException(Exception):
   pass
 
+
 class BaseRequestHandler(webapp2.RequestHandler):
   def handle_exception(self, exception, debug_mode):
-   if isinstance(exception, ApiException):
-     # ApiExceptions are expected, and will return nice error messages to the client
-     self.response.write(exception.message)
-     self.response.set_status(400)
-   else:
-     # All other exceptions are unexpected and should crash properly
-     return webapp2.RequestHandler.handle_exception(self, exception, debug_mode)
+    if isinstance(exception, ApiException):
+      # ApiExceptions are expected, and will return nice error messages to the client
+      self.response.write(exception.message)
+      self.response.set_status(400)
+    else:
+      # All other exceptions are unexpected and should crash properly
+      return webapp2.RequestHandler.handle_exception(self, exception, debug_mode)
 
-  def get_content(self, path, method='POST', body=None):
+  def read_search(self, readsetId, sequenceName, sequenceStart, sequenceEnd):
+    body = {
+      'readsetIds': [readsetId],
+      'sequenceName': sequenceName,
+      'sequenceStart': sequenceStart,
+      'sequenceEnd': sequenceEnd,
+      # May want to specfify just the fields that we need.
+      #'includeFields': ["position", "alignedSequence"]
+      }
+
+    logging.debug("Request Body:")
+    logging.debug(body)
+
+    content = self._get_content("reads/search", body=body)
+    return content
+
+  def _get_content(self, path, method='POST', body=None):
     http = decorator.http()
     try:
       response, content = http.request(
@@ -167,10 +184,11 @@ class BaseRequestHandler(webapp2.RequestHandler):
     elif response.status != 200:
       if 'error' in content:
         logging.error("Error Code: %s Message: %s" %
-                     (content['error']['code'], content['error']['message']))
+                      (content['error']['code'], content['error']['message']))
       raise ApiException("Something went wrong with the API call. "
-                        "Please check the logs for more details.")
+                         "Please check the logs for more details.")
     return content
+
 
 class MainHandler(BaseRequestHandler):
   """The main page that users will interact with, which presents users with
@@ -202,15 +220,15 @@ class MainHandler(BaseRequestHandler):
     {'name': "chr22", 'sequenceLength': 51304566},
     {'name': "chrX", 'sequenceLength': 155270560},
     {'name': "chrY", 'sequenceLength': 59373566},
-    ]
+  ]
 
   # Provide default settings for the user that they can then override.
   DEFAULT_SETTINGS = {
-    'readsetIds': ["CJ_ppJ-WCxD-2oXg667IhDM="],
+    'readsetId': "CJ_ppJ-WCxD-2oXg667IhDM=",
     'sequenceName': "chr20",
     'sequenceStart': 68198,
     'sequenceEnd': 68199,
-    }
+  }
 
   @decorator.oauth_aware
   def get(self):
@@ -223,6 +241,7 @@ class MainHandler(BaseRequestHandler):
         "targets": MainHandler.TARGETS,
         "settings": MainHandler.DEFAULT_SETTINGS,
       }))
+
     else:
       template = JINJA_ENVIRONMENT.get_template('grantaccess.html')
       self.response.write(template.render({
@@ -231,39 +250,38 @@ class MainHandler(BaseRequestHandler):
 
   @decorator.oauth_aware
   def post(self):
-    body = None
+    readsetId = self.request.get("readsetId")
+    sequenceName = self.request.get('sequenceName')
+    sequenceStart = int(self.request.get('sequenceStart'))
+    sequenceEnd = int(self.request.get('sequenceEnd'))
+    useMockData = self.request.get('useMockData')
+
+    # Todo: Validate inputs such as sequence start and end to make sure they are in bounds based on TARGETS.
+
     content = None
     coverage = None
     errorMessage = None
 
     if self.request.get("submitRead"):
       # Use the API to get the requested data.
-      body = {
-        'readsetIds': [self.request.get("readsetId")],
-        'sequenceName': self.request.get('sequenceName'),
-        'sequenceStart': max(0, int(self.request.get('sequenceStart'))),
-        'sequenceEnd': int(self.request.get('sequenceEnd')),
-        # May want to specfify just the fields that we need.
-        #'includeFields': ["position", "alignedSequence"]
-        }
-
       # If you are running the real pipeline map reduce then hit it.
       if self.request.get('runPipeline'):
         logging.debug("Running pipeline")
-        pipeline = CoveragePipeline(body["readsetIds"][0], body["sequenceName"], body["sequenceStart"],
-                                    body["sequenceEnd"])
+        pipeline = CoveragePipeline(readsetId, sequenceName, sequenceStart, sequenceEnd)
         pipeline.start()
         self.redirect(pipeline.base_path + "/status?root=" + pipeline.pipeline_id)
         return
 
-      logging.debug("Request Body:")
-      logging.debug(body)
-
-      # Make the API call here to process directly.
-      try:
-        content = self.get_content("reads/search", body=body)
-      except ApiException as exception:
-        errorMessage = exception.message
+      if useMockData:
+        # Use the mock to get coverage information.
+        mock = MockGenomicsAPI()
+        content = mock.read_search(readsetId, sequenceName, sequenceStart, sequenceEnd)
+      else:
+        # Make the API call here to process directly.
+        try:
+          content = self.read_search(readsetId, sequenceName, sequenceStart, sequenceEnd)
+        except ApiException as exception:
+          errorMessage = exception.message
 
     elif self.request.get("submitReadSample"):
       # Read in local sample data which is based off of default settings.
@@ -278,10 +296,12 @@ class MainHandler(BaseRequestHandler):
     if content != None:
       if 'reads' in content:
         # Calculate results
-        coverage = compute_coverage(content, body["sequenceStart"], body["sequenceEnd"])
-        store_coverage(body["readsetIds"][0], body["sequenceName"], coverage)
+        coverage = compute_coverage(content, sequenceStart, sequenceEnd)
+        #store_coverage(readsetId, sequenceName, coverage)
       else:
         errorMessage = "There API did not return any reads to process."
+    else:
+      errorMessage = "No content was returned to process."
 
     # Render template with results or error.
     username = users.User().nickname()
@@ -289,10 +309,17 @@ class MainHandler(BaseRequestHandler):
     self.response.out.write(template.render({
       "username": username,
       "targets": MainHandler.TARGETS,
-      "settings": body,
+      "settings": {
+        'readsetId': readsetId,
+        'sequenceName': sequenceName,
+        'sequenceStart': sequenceStart,
+        'sequenceEnd': sequenceEnd,
+        'useMockData': useMockData,
+      },
       "errorMessage": errorMessage,
       "results": coverage,
     }))
+
 
 def compute_coverage(content, sequenceStart, sequenceEnd):
   """Takes the json results from the Genomics API call and computes coverage. """
@@ -303,14 +330,18 @@ def compute_coverage(content, sequenceStart, sequenceEnd):
       # If the position is in the range then count it as being covered by that read.
       if sequence >= read["position"] and sequence < read["position"] + len(read["alignedSequence"]):
         coverage[sequence] += 1
+      else:
+        # Force a 0 to be recorded for that sequence number.
+        coverage[sequence] += 0
 
   logging.debug("Processed: %d reads." % len(content["reads"]))
   return coverage
 
+
 def store_coverage(readsetId, sequenceName, dict):
   for sequence, coverage in dict.iteritems():
     key = GenomicsCoverageStatistics.getKeyName(readsetId, sequenceName, sequence)
-    s = GenomicsCoverageStatistics(key_name = key)
+    s = GenomicsCoverageStatistics(key_name=key)
     s.readsetId = readsetId
     s.sequenceName = sequenceName
     s.sequence = sequence
@@ -347,6 +378,7 @@ def word_count_reduce(key, values):
   """Word count reduce function."""
   yield "%s: %d\n" % (key, len(values))
 
+
 class CoveragePipeline(base_handler.PipelineBase):
   """A pipeline to run Word count demo.
 
@@ -369,15 +401,15 @@ class CoveragePipeline(base_handler.PipelineBase):
           "sequenceName": sequenceName,
           "sequenceStart": sequenceStart,
           "sequenceEnd": sequenceEnd,
-          },
+        },
         "output_writer": {
           "readsetId": readsetId,
           "sequenceName": sequenceName,
-          },
         },
+      },
       reducer_params={
         "mime_type": "text/plain",
-        },
+      },
       shards=16)
     #yield StoreOutput(filekey, output)
 
@@ -399,9 +431,53 @@ class StoreOutput(base_handler.PipelineBase):
     s.date = datetime.datetime.now()
     s.put()
 
+
 app = webapp2.WSGIApplication(
   [
     ('/', MainHandler),
     (decorator.callback_path, decorator.callback_handler()),
-   ],
+  ],
   debug=True)
+
+
+class MockGenomicsAPI():
+  """ Provides a mock for the Genomics API so that you can call use this class
+  instead of actual Genomics API calls for testing purposes.
+  """
+
+  def read_search(self, readsetId, sequenceName, sequenceStart, sequenceEnd):
+    """ Provides mock data for the https://www.googleapis.com/genomics/v1beta/reads/search
+    Genomics API call.
+
+    The mock data will return reads such that the coverage counts should equal the last 2
+    digits of the sequence number. For example a sequenceStart 68164 should have a coverage
+    of 64 reads.
+    """
+    output = {
+      "reads": [],
+    }
+    # Start with the first page of 100.
+    startRoundDown = sequenceStart / 100 * 100;
+    for startPage in range(startRoundDown, sequenceEnd + 1, 100):
+      output["reads"] += self._create_page_of_reads(startPage)
+    return output
+
+  def _create_page_of_reads(self, startPosition):
+    """ Creates a page of data staring from page XXX00 and ending at page XXX99.
+     Page XXX00 has 0 coverage, page XXX01 has a coverage of 1 read, ... page XXX99
+     has a coverage of 99 reads.
+    """
+    reads = []
+    endPosition = startPosition + 100
+    for position in range(startPosition + 1, endPosition):
+      reads.append(self._create_read(position, endPosition - position))
+    return reads
+
+  def _create_read(self, position, length):
+    read = {
+      "position": position,
+      "alignedSequence": "X" * length,
+    }
+    return read
+
+

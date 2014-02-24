@@ -53,7 +53,7 @@ limitations under the License.
               <div class="col-md-4">Readset Id:</div>
               <div class="col-md-8">
                 <input class="width-300" type="textfield" name="readsetId" id="readsetId"
-                       value="{{ settings.readsetIds[0] }}" /></div>
+                       value="{{ settings.readsetId }}" /></div>
             </div>
             <div class="row height-40">
               <div class="col-md-4">Sequence Name:</div>
@@ -78,18 +78,23 @@ limitations under the License.
             </div>
             <div class="row height-40">
               <div class="col-md-4">&nbsp;</div>
+              <div class="col-md-8"><input type="checkbox" id="useMockData" name="useMockData"
+                  {% if settings.useMockData %} checked{% endif %}/>
+                Use mock data (sequence last 2 digits = coverage).</div>
+            </div>
+            <div class="row height-40">
+              <div class="col-md-4">&nbsp;</div>
               <div class="col-md-8"><input type="checkbox" id="runPipeline" name="runPipeline" />
                 Run as a pipeline Map Reduce.</div>
             </div>
-
             <div class="row height-40">
               <div class="col-md-4">&nbsp;</div>
               <div class="col-md-8">
                 <input class="btn btn-primary" type="submit" id="submitRead" name="submitRead" value="Submit"
                      onclick="submitReadProcessing()">
-                &nbsp;It may be quicker to:&nbsp;
+                &nbsp;or instead, use <a href="/static/listRead_SampleData.json" target="_blank">this</a>:&nbsp;
                 <input class="btn btn-info" type="submit" id="submitReadSample"
-                       name="submitReadSample" value="Use Sample Data">
+                       name="submitReadSample" value="Sample Data">
               </div>
             </div>
           </form>
