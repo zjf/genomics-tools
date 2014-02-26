@@ -326,9 +326,10 @@ public class GenomicsSample {
     assertOrDie(!cmdLine.datasetIds.isEmpty(), "Currently, dataset_ids is required. " +
         "This requirement will go away in the future.\n");
 
-    ListReadsetsRequest content = new ListReadsetsRequest()
-        .setDatasetIds(cmdLine.datasetIds);
-    ListReadsetsResponse result = genomics.readsets().search(content).execute();
+    ListReadsetsRequest content = new ListReadsetsRequest().setDatasetIds(cmdLine.datasetIds);
+    ListReadsetsResponse result = genomics.readsets().search(content)
+        .setFields(cmdLine.fields)
+        .execute();
     System.out.println("result: " + result);
   }
 
@@ -336,7 +337,9 @@ public class GenomicsSample {
     // validate the command line
     assertOrDie(!cmdLine.readsetId.isEmpty(), "Must specify a readset_id\n");
 
-    GetReadsetResponse result = genomics.readsets().get(cmdLine.readsetId).execute();
+    GetReadsetResponse result = genomics.readsets().get(cmdLine.readsetId)
+        .setFields(cmdLine.fields)
+        .execute();
     System.out.println("result: " + result);
   }
 
@@ -349,6 +352,7 @@ public class GenomicsSample {
     // Create request
     long projectId = parseProjectId(cmdLine.projectId);
     GetJobResponse result = genomics.jobs().get(cmdLine.jobId)
+        .setFields(cmdLine.fields)
         .setProjectId(projectId)
         .execute();
     System.out.println("result: " + result);
@@ -357,7 +361,6 @@ public class GenomicsSample {
   private static void listReads() throws IOException {
     // Create request.
     ListReadsRequest content = new ListReadsRequest()
-        .setIncludeFields(cmdLine.includeFields)
         .setReadsetIds(cmdLine.readsetIds)
         .setPageToken(cmdLine.pageToken);
 
@@ -376,7 +379,9 @@ public class GenomicsSample {
     }
 
     // Invoke query and get response
-    ListReadsResponse result = genomics.reads().search(content).execute();
+    ListReadsResponse result = genomics.reads().search(content)
+        .setFields(cmdLine.fields)
+        .execute();
     System.out.println("result: " + result);
   }
 }

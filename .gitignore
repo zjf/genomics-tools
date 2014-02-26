@@ -2,5 +2,5 @@
 .DS_Store
 .idea
 client_secrets.json
-java-client/target
+client-java/target
 /.project

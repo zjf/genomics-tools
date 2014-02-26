@@ -74,11 +74,11 @@ class CommandLine {
       usage = "The token used to retrieve additional pages in paginated API methods.")
   public String pageToken = "";
 
-  @Option(name = "--include_fields",
+  @Option(name = "--fields",
       metaVar = "<field>",
-      usage = "The list of fields to be returned with this query. " +
+      usage = "The fields to be returned with this query. " +
       "Leaving this blank returns all fields.")
-  public List<String> includeFields = new ArrayList<String>();
+  public String fields = "";
 
   @Option(name = "--dataset_ids",
       metaVar = "<datasetIds>",

@@ -20,9 +20,12 @@ cd target
 java -jar google-api-services-genomics-v1-rev20130925-1.18.0-rc-SNAPSHOT.jar auth
 ```
 
-* Once authenticated, you can then perform API queries like fetching reads:
+* Once authenticated, you can then perform API queries like fetching readsets or reads:
 ```
-java -jar google-api-services-genomics-v1-rev20130925-1.18.0-rc-SNAPSHOT.jar listreads --project_id <project_id> --sequence_name 1 --sequence_start 10000 --sequence_end 10000
+java -jar google-api-services-genomics-v1-rev20130925-1.18.0-rc-SNAPSHOT.jar listreadsets --dataset_ids <dataset_id> --fields "readsets(id,name)"
+```
+```
+java -jar google-api-services-genomics-v1-rev20130925-1.18.0-rc-SNAPSHOT.jar listreads --readset_ids <readset_id> --sequence_name 1 --sequence_start 10000 --sequence_end 10000
 ```
 
 ###Code layout
