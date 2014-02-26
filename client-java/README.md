@@ -13,7 +13,7 @@ mvn package
 cd target
 ```
 
-* Then, follow the <a href="https://developers.google.com/genomics/v1beta/quickstart">quickstart instructions</a> to generate a valid client_secrets.json file.
+* Then, follow the <a href="https://developers.google.com/genomics/">authentication instructions</a> to generate a valid client_secrets.json file.
 
 * Move the client_secrets.json file into the target directory and start the authentication process:
 ```
