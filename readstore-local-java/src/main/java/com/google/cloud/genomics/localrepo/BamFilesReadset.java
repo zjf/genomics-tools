@@ -17,6 +17,7 @@ package com.google.cloud.genomics.localrepo;
 
 import com.google.cloud.genomics.localrepo.BamFile.IndexedBamFile;
 import com.google.cloud.genomics.localrepo.dto.Readset;
+import com.google.cloud.genomics.localrepo.dto.Readset.FileData;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -29,6 +30,7 @@ import net.sf.samtools.SAMFileHeader.SortOrder;
 import org.joda.time.DateTimeUtils;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
 
@@ -90,7 +92,11 @@ public class BamFilesReadset {
               getSample(),
               getDatasetId(),
               DateTimeUtils.currentTimeMillis(),
-              FluentIterable.from(getBamFiles()).transform(BamFile.GET_FILE_DATA).toList());
+              FluentIterable.from(getBamFiles()).transform(BamFile.GET_FILE_DATA).toSortedList(new Comparator<FileData>() {
+                @Override public int compare(FileData f1, FileData f2) {
+                  return f1.getFileUri().compareTo(f2.getFileUri());
+                }
+              }));
         }
       });
 
