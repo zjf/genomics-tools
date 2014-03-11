@@ -3,4 +3,5 @@
 .idea
 client_secrets.json
 client-java/target
+readstore-local-java/target
 /.project
