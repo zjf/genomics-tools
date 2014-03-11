@@ -14,6 +14,9 @@ to deploy.
 * **mapreduce-python** uses the <a href="https://developers.google.com/appengine/docs/python/dataprocessing/">MapReduce Python</a>
 feature of Google App Engine to do complex calculations over API data.
 
+* **protobufs** includes the protocol buffers used by the API. All client libraries,
+documentation, and output are auto generated from these files.
+
 * **readstore-local-java** implements the Genomics API locally, reading its data from a local
 <a href="http://samtools.sourceforge.net/SAMv1.pdf">BAM file</a>.
 

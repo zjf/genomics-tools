@@ -1,7 +1,8 @@
 protobufs
 ==============
 
-The Google Genomics API uses <a href="https://developers.google.com/protocol-buffers/">protobuf</a>
+The <a href="https://developers.google.com/genomics">Google Genomics API</a>
+uses <a href="https://developers.google.com/protocol-buffers/">protobuf</a>
 files to represent genomics data. The client libraries, documentation, and json
 output are all auto generated from these .proto files.
 
@@ -14,3 +15,9 @@ output are all auto generated from these .proto files.
     The hope is that all important BAM information will be pulled into top level
     readset fields. Until this is done, each readset contains the exact header
     sections from the BAM file it was imported from.
+
+The format provided by these files is also documented in the
+<a href="https://www.googleapis.com/discovery/v1/apis/genomics/v1beta/rest">API definition file</a>.
+
+Note also that all of the Google Genomics APIs can return protobufs instead of json by adding a
+alt=proto url parameter to a request.
