@@ -1,0 +1,82 @@
+// Copyright 2014 Google Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package cloud.genomics.readstore;
+
+import "common.proto";
+
+// A Read is a group of bases that may or may not have been aligned to a
+// reference. It contains quality information and other metadata.
+// (-- Next ID: 17 --)
+message Read {
+
+  // The read ID.
+  optional string id = 1;
+
+  // The name of the read. When imported from a BAM file, this is the query
+  // template name. (QNAME)
+  optional string name = 2;
+
+  // The ID of the readset this read belongs to.
+  optional string readset_id = 16;
+
+  // Each bit of this number has a different meaning if enabled.
+  // See the full BAM spec for more details. (FLAG)
+  optional int32 flags = 4;
+
+  // The name of the sequence that this read is aligned to. This would be 'X'
+  // for the X Chromosome or '20' for Chromosome 20. (RNAME)
+  optional string reference_sequence_name = 5;
+
+  // The 1-based start position of the aligned read. If the first base starts at
+  // the very beginning of the reference sequence, then the position would be
+  // '1'. (POS)
+  optional int32 position = 6;
+
+  // A score up to 255 that represents how likely this read's aligned position
+  // is correct. A higher value is better. (MAPQ)
+  optional int32 mapping_quality = 7;
+
+  // A condensed representation of how this read matches up to the reference.
+  // (CIGAR)
+  optional string cigar = 8;
+
+  // The name of the sequence that the paired read is aligned to. This is
+  // usually the same as referenceSequenceName. (RNEXT)
+  optional string mate_reference_sequence_name = 9;
+
+  // The 1-based start position of the paired read. (PNEXT)
+  optional int32 mate_position = 10;
+
+  // Length of the original piece of dna that produced both this read and the
+  // paired read. (TLEN)
+  optional int32 template_length = 11;
+
+  // The list of bases that this read represents (e.g. 'CATCGA'). (SEQ)
+  optional string original_bases = 12;
+
+  // The originalBases after the cigar field has been applied. Deletions are
+  // represented with '-' and insertions are omitted.
+  optional string aligned_bases = 13;
+
+  // Represents the quality of each base in this read. Each character represents
+  // one base. To get the quality, take the ASCII value of the character and
+  // subtract 33. (QUAL)
+  optional string base_quality = 14;
+
+  // A map of additional read information. (TAG)
+  repeated cloud.genomics.common.KeyValue tags = 15;
+}

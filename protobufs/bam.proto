@@ -1,0 +1,135 @@
+// Copyright 2014 Google Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto2";
+
+package cloud.genomics.parser.bam;
+
+// @HD: The header line information in the header section.
+// (-- Next ID: 3 --)
+message Header {
+
+  // (VN) BAM format version.
+  optional string version = 1;
+
+  // (SO) Sorting order of alignments.
+  optional string sorting_order = 2;
+}
+
+// (-- Next ID: 7 --)
+// @SQ: Information about the reference sequence used for the alignments.
+message ReferenceSequence {
+
+  // (SN) Reference sequence name.
+  optional string name = 1;
+
+  // (LN) Reference sequence length.
+  optional int32 length = 2;
+
+  // (AS) Genome assembly identifier.
+  optional string assembly_id = 3;
+
+  // (M5) MD5 checksum of the sequence in the uppercase, excluding spaces but
+  // including pads as *.
+  optional string md5_checksum = 4;
+
+  // (SP) Species.
+  optional string species = 5;
+
+  // (UR) URI of the sequence.
+  optional string uri = 6;
+}
+
+// @RG: Metadata information about reads.
+// (-- Next ID: 13 --)
+message ReadGroup {
+  // (ID) Read group identifier.
+  optional string id = 1;
+
+  // (CN) Name of sequencing center producing the read.
+  optional string sequencing_center_name = 2;
+
+  // (DS) Description.
+  optional string description = 3;
+
+  // (DT) Date the run was produced (ISO8601 date or date/time.)
+  optional string date = 4;
+
+  // (FO) Flow order. The array of nucleotide bases that correspond to the
+  // nucleotides used for each flow of each read.
+  optional string flow_order = 5;
+
+  // (KS) The array of nucleotide bases that correspond to the key sequence
+  // of each read.
+  optional string key_sequence = 6;
+
+  // (LS) Library.
+  optional string library = 7;
+
+  // (PG) Programs used for processing the read group.
+  optional string processing_program  = 8;
+
+  // (PI) Predicted median insert size.
+  optional int32 predicted_insert_size = 9;
+
+  // (PL) Platform/technology used to produce the reads.
+  optional string sequencing_technology = 10;
+
+  // (PU) Platform unit.
+  optional string platform_unit = 11;
+
+  // (SM) Sample.
+  optional string sample = 12;
+}
+
+// @PG: Information about program used to process the reads in the BAM/SAM file.
+// (-- Next ID: 6 --)
+message Program {
+  // (ID) Program record identifier.
+  optional string id = 1;
+
+  // (PN) Program name.
+  optional string name = 2;
+
+  // (CL) Command line.
+  optional string command_line = 3;
+
+  // (PP) Previous program id.
+  optional string prev_program_id = 4;
+
+  // (VN) Program version.
+  optional string version = 5;
+}
+
+// The header section of the BAM/SAM file.
+// (-- Next ID: 9 --)
+message HeaderSection {
+  // The file uri that this data was imported from.
+  optional string file_uri = 8;
+
+  // (@HD) The header line.
+  repeated Header headers = 3;
+
+  // (@SQ) Reference sequence dictionary.
+  repeated ReferenceSequence ref_sequences = 4;
+
+  // (@RG) Read group.
+  repeated ReadGroup read_groups = 5;
+
+  // (@PG) Programs.
+  repeated Program programs = 6;
+
+  // (@CO) One-line text comments.
+  repeated string comments = 7;
+}
