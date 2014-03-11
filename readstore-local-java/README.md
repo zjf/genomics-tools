@@ -2,7 +2,7 @@ readstore-local-java
 ==============
 
 ###Getting started
-* To use, first build the client using <a href="http://maven.apache.org/download.cgi">Apache Maven</a>:
+* To use, first build the code using <a href="http://maven.apache.org/download.cgi">Apache Maven</a>:
 
 ```
 cd repository-local-java
