@@ -14,6 +14,7 @@
 package com.google.cloud.genomics.localrepo;
 
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.FluentIterable;
@@ -54,10 +55,14 @@ public class CommandLineArguments {
         "The port to run the server on",
         "^(\\p{Digit}+)$") {
       @Override Object getValue(List<MatchResult> results) {
-        if (1 != results.size()) {
-          throw new IllegalArgumentException("Flag 'port' can only appear once");
+        switch (results.size()) {
+          case 0:
+            return Optional.<Integer>absent();
+          case 1:
+            return Optional.of(Integer.parseInt(GROUP_1.apply(Iterables.getOnlyElement(results))));
+          default:
+            throw new IllegalArgumentException("Flag 'port' can only appear once");
         }
-        return Integer.parseInt(GROUP_1.apply(Iterables.getOnlyElement(results)));
       }
     };
 
@@ -126,14 +131,14 @@ public class CommandLineArguments {
   public static CommandLineArguments parse(String... args) {
     CommandLine commandLine = Flag.parse(args);
     return new CommandLineArguments(
-        (Integer) Flag.PORT.getValue(commandLine),
+        (Optional<Integer>) Flag.PORT.getValue(commandLine),
         (Map<String, String>) Flag.DATASET.getValue(commandLine));
   }
 
   private final Map<String, String> datasets;
-  private final int port;
+  private final Optional<Integer> port;
 
-  private CommandLineArguments(int port, Map<String, String> datasets) {
+  private CommandLineArguments(Optional<Integer> port, Map<String, String> datasets) {
     this.port = port;
     this.datasets = datasets;
   }
@@ -142,7 +147,7 @@ public class CommandLineArguments {
     return datasets;
   }
 
-  public int getPort() {
+  public Optional<Integer> getPort() {
     return port;
   }
 }

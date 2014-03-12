@@ -16,6 +16,7 @@ limitations under the License.
 package com.google.cloud.genomics.localrepo;
 
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 
 import org.codehaus.jackson.jaxrs.JacksonJaxbJsonProvider;
@@ -104,8 +105,9 @@ public final class Server {
 
   public static void main(String[] args) throws Exception {
     CommandLineArguments cmdLine = CommandLineArguments.parse(args);
+    Optional<Integer> port = cmdLine.getPort();
     builder()
-        .setPort(cmdLine.getPort())
+        .setPort(port.isPresent() ? port.get() : Builder.DEFAULT_PORT)
         .setDatasets(
             FluentIterable.from(cmdLine.getDatasets().entrySet())
                 .transform(CREATE_DATASET)
