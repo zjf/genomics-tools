@@ -152,7 +152,7 @@ public class ServerTest {
               .request()
               .post(
                   Entity.json(SearchReadsRequest.create(
-                      Collections.<String>emptyList(),
+                      null,
                       Collections.singletonList(entry.getKey().getId()),
                       "reference",
                       null,

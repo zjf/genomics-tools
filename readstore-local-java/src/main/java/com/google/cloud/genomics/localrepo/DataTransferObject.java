@@ -16,15 +16,26 @@ package com.google.cloud.genomics.localrepo;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 
+import org.codehaus.jackson.JsonParser;
+import org.codehaus.jackson.JsonProcessingException;
+import org.codehaus.jackson.Version;
+import org.codehaus.jackson.map.DeserializationContext;
+import org.codehaus.jackson.map.JsonDeserializer;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.ObjectWriter;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
+import org.codehaus.jackson.map.module.SimpleModule;
 
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Objects;
 
 public abstract class DataTransferObject {
@@ -83,8 +94,36 @@ public abstract class DataTransferObject {
     }
   }
 
-  static final ObjectMapper OBJECT_MAPPER =
-      new ObjectMapper().setSerializationInclusion(Inclusion.NON_NULL);
+  static final ObjectMapper OBJECT_MAPPER;
+
+  static {
+    (OBJECT_MAPPER = new ObjectMapper().setSerializationInclusion(Inclusion.NON_NULL))
+        .registerModule(new SimpleModule("test", new Version(1, 0, 0, null))
+            .addDeserializer(Map.class,
+                new JsonDeserializer<Map<?, ?>>() {
+
+                  @Override public Map<?, ?> deserialize(JsonParser jp, DeserializationContext ctxt)
+                      throws IOException, JsonProcessingException {
+                    return jp.readValueAs(HashMap.class);
+                  }
+
+                  @Override public Map<?, ?> getNullValue() {
+                    return Collections.EMPTY_MAP;
+                  }
+                })
+            .addDeserializer(List.class,
+                new JsonDeserializer<List<?>>() {
+
+                  @Override public List<?> deserialize(JsonParser jp, DeserializationContext ctxt)
+                      throws IOException, JsonProcessingException {
+                    return jp.readValueAs(ArrayList.class);
+                  }
+
+                  @Override public List<?> getNullValue() {
+                    return Collections.EMPTY_LIST;
+                  }
+                }));
+  }
 
   private static final ObjectWriter OBJECT_WRITER = OBJECT_MAPPER.writerWithDefaultPrettyPrinter();
 
