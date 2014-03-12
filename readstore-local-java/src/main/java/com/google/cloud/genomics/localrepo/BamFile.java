@@ -34,6 +34,7 @@ import java.text.DateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 public class BamFile {
 
@@ -43,10 +44,13 @@ public class BamFile {
         new Function<BamFile, Optional<IndexedBamFile>>() {
           @Override public Optional<IndexedBamFile> apply(BamFile bamFile) {
             File file = bamFile.getFile();
-            File index = new File(String.format("%s.bai", file.getAbsolutePath()));
-            return index.isFile()
-                ? Optional.of(new IndexedBamFile(file, index))
-                : Optional.<IndexedBamFile>absent();
+            String path = file.getAbsolutePath();
+            File index = new File(String.format("%s.bai", path));
+            if (isReadableFile(index)) {
+              return Optional.of(new IndexedBamFile(file, index));
+            }
+            LOGGER.warning(String.format("BAM file \"%s\" has no index", path));
+            return Optional.<IndexedBamFile>absent();
           }
         };
 
@@ -65,7 +69,7 @@ public class BamFile {
   public static final Function<File, Optional<BamFile>> CREATE =
       new Function<File, Optional<BamFile>>() {
         @Override public Optional<BamFile> apply(File file) {
-          return file.isFile() && file.getName().endsWith(".bam")
+          return isReadableFile(file) && file.getName().endsWith(".bam")
               ? Optional.of(new BamFile(file))
               : Optional.<BamFile>absent();
         }
@@ -136,6 +140,12 @@ public class BamFile {
         }
       };
 
+  private static final Logger LOGGER = Logger.getLogger(BamFile.class.getName());
+
+  private static boolean isReadableFile(File file) {
+    return file.isFile() && file.canRead();
+  }
+
   final File file;
 
   private final Supplier<SAMFileHeader> header = Suppliers.memoize(
@@ -173,6 +183,10 @@ public class BamFile {
     file = bamFile;
   }
 
+  SAMFileReader createReader() {
+    return new SAMFileReader(file);
+  }
+
   @Override public final boolean equals(Object obj) {
     return null != obj
         && BamFile.class.isAssignableFrom(obj.getClass())
@@ -195,17 +209,13 @@ public class BamFile {
     return getFile().hashCode();
   }
 
-  @Override public final String toString() {
-    return getFile().toString();
-  }
-
-  SAMFileReader createReader() {
-    return new SAMFileReader(file);
-  }
-
   final SAMFileReader open() {
     SAMFileReader reader = createReader();
     reader.setValidationStringency(ValidationStringency.SILENT);
     return reader;
+  }
+
+  @Override public final String toString() {
+    return getFile().toString();
   }
 }
