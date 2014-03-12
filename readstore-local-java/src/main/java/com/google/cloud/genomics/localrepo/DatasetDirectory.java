@@ -186,8 +186,8 @@ public class DatasetDirectory {
     return
         new Function<X, FluentIterable<X>>() {
           @Override public FluentIterable<X> apply(final X initial) {
-            return FluentIterable.from(
-                new Iterable<X>() {
+            return
+                new FluentIterable<X>() {
                   @Override public Iterator<X> iterator() {
                     return
                         new AbstractIterator<X>() {
@@ -212,7 +212,7 @@ public class DatasetDirectory {
                           }
                         };
                   }
-                });
+                };
           }
         };
   }
