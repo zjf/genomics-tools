@@ -149,16 +149,16 @@ public class ServerTest {
       assertEquals(
           entry.getValue(),
           TARGET.path("/reads/search")
-          .request()
-          .post(
-              Entity.json(SearchReadsRequest.create(
-                  Collections.<String>emptyList(),
-                  Collections.singletonList(entry.getKey().getId()),
-                  "reference",
-                  null,
-                  null,
-                  null)),
-              SearchReadsResponse.class));
+              .request()
+              .post(
+                  Entity.json(SearchReadsRequest.create(
+                      Collections.<String>emptyList(),
+                      Collections.singletonList(entry.getKey().getId()),
+                      "reference",
+                      null,
+                      null,
+                      null)),
+                  SearchReadsResponse.class));
     }
   }
 

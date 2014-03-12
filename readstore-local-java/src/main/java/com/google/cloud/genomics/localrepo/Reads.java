@@ -21,7 +21,9 @@ import com.google.cloud.genomics.localrepo.dto.SearchReadsResponse;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableList;
 
+import java.util.Iterator;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -39,12 +41,32 @@ import javax.ws.rs.core.Response;
 @Singleton
 public class Reads extends BaseResource {
 
-  private static final Function<FluentIterable<Read>, SearchReadsResponse> CREATE_RESPONSE =
-      new Function<FluentIterable<Read>, SearchReadsResponse>() {
-        @Override public SearchReadsResponse apply(FluentIterable<Read> reads) {
-          return SearchReadsResponse.create(reads.limit(256).toList(), null);
+  private static class Page<X> {
+
+    private static final int PAGE_SIZE = 256;
+
+    static <X> Page<X> nextPage(Iterable<X> stream, int page) {
+      Iterator<X> iterator = stream.iterator();
+      ImmutableList.Builder<X> objects = ImmutableList.builder();
+      for (int i = 0; iterator.hasNext() && i < PAGE_SIZE * (1 + page); ++i) {
+        X next = iterator.next();
+        if (PAGE_SIZE * page <= i) {
+          objects.add(next);
         }
-      };
+      }
+      return new Page<>(
+          objects.build(),
+          iterator.hasNext() ? Optional.of(page + 1) : Optional.<Integer>absent());
+    }
+
+    final Optional<Integer> nextPage;
+    final List<X> objects;
+
+    private Page(List<X> objects, Optional<Integer> nextPage) {
+      this.objects = objects;
+      this.nextPage = nextPage;
+    }
+  }
 
   private final Backend backend;
 
@@ -55,7 +77,7 @@ public class Reads extends BaseResource {
 
   @POST
   @Path("/search")
-  public Response search(SearchReadsRequest request) {
+  public Response search(final SearchReadsRequest request) {
     List<String> datasetIds = request.getDatasetIds();
     List<String> readsetIds = request.getReadsetIds();
     return datasetIds.isEmpty() || readsetIds.isEmpty()
@@ -66,7 +88,16 @@ public class Reads extends BaseResource {
                 request.getSequenceName(),
                 Optional.fromNullable(request.getSequenceStart()),
                 Optional.fromNullable(request.getSequenceEnd()),
-                CREATE_RESPONSE))
+                new Function<FluentIterable<Read>, SearchReadsResponse>() {
+                  @Override public SearchReadsResponse apply(FluentIterable<Read> reads) {
+                    Page<Read> page = Page.nextPage(
+                        reads,
+                        Integer.parseInt(Optional.fromNullable(request.getPageToken()).or("0")));
+                    return SearchReadsResponse.create(
+                        page.objects,
+                        page.nextPage.isPresent() ? String.valueOf(page.nextPage.get()) : null);
+                  }
+                }))
             .build()
         : BAD_REQUEST;
   }
