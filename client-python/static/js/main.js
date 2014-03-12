@@ -46,9 +46,17 @@ function closeButton() {
   return $('<button type="button" class="close" aria-hidden="true">&times;</button>');
 }
 
+function getBackend() {
+  return $('#backend').val();
+}
+
+function getBackendName() {
+  return {'GOOGLE': 'Google', 'NCBI' : 'NCBI', 'LOCAL': 'Local'}[getBackend()];
+}
+
 function saveSettings() {
   $.ajaxSetup({
-    data: {backend: $('#backend').val()}
+    data: {backend: getBackend()}
   });
   searchReadsets();
   return false;
@@ -87,12 +95,14 @@ function searchReadsets(button) {
     button = $(button);
     button.button('loading');
   }
-  var div = $('#readsetResults').empty();
+  var div = $('#readsetResults').html('<img src="static/img/spinner.gif"/>');
   $.getJSON('/api/readsets')
       .done(function(res) {
+        div.empty();
         $.each(res.readsets, function(i, data) {
-          $('<a/>', {'href': '#', 'class': 'list-group-item'}).text(data.name).appendTo(div).click(function() {
-            addReadset(data.name, data.id);
+          var name = getBackendName() + ": " + data.name;
+          $('<a/>', {'href': '#', 'class': 'list-group-item'}).text(name).appendTo(div).click(function() {
+            addReadset(name, data.id);
           });
         })
       }).always(function() {
