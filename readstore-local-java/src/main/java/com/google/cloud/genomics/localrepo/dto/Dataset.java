@@ -22,6 +22,9 @@ import org.codehaus.jackson.annotate.JsonProperty;
 
 public class Dataset extends DataTransferObject {
 
+  private static final ReflectiveHashCodeAndEquals<Dataset> HASH_CODE_AND_EQUALS =
+      ReflectiveHashCodeAndEquals.create(Dataset.class);
+
   @JsonCreator public static Dataset create(
       @JsonProperty("id") String id,
       @JsonProperty("projectId") long projectId,
@@ -39,12 +42,20 @@ public class Dataset extends DataTransferObject {
     this.isPublic = isPublic;
   }
 
+  @Override public boolean equals(Object obj) {
+    return HASH_CODE_AND_EQUALS.equals(this, obj);
+  }
+
   public String getId() {
     return id;
   }
 
   public long getProjectId() {
     return projectId;
+  }
+
+  @Override public int hashCode() {
+    return HASH_CODE_AND_EQUALS.hashCode(this);
   }
 
   public boolean isIsPublic() {

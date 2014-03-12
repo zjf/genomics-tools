@@ -24,6 +24,9 @@ import java.util.Map;
 
 public class Read extends DataTransferObject {
 
+  private static final ReflectiveHashCodeAndEquals<Read> HASH_CODE_AND_EQUALS =
+      ReflectiveHashCodeAndEquals.create(Read.class);
+
   @JsonCreator public static Read create(
       @JsonProperty("id") String id,
       @JsonProperty("name") String name,
@@ -107,6 +110,10 @@ public class Read extends DataTransferObject {
     this.tags = tags;
   }
 
+  @Override public boolean equals(Object obj) {
+    return HASH_CODE_AND_EQUALS.equals(this, obj);
+  }
+
   public String getAlignedBases() {
     return alignedBases;
   }
@@ -165,5 +172,9 @@ public class Read extends DataTransferObject {
 
   public Integer getTemplateLength() {
     return templateLength;
+  }
+
+  @Override public int hashCode() {
+    return HASH_CODE_AND_EQUALS.hashCode(this);
   }
 }

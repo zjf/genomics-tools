@@ -24,6 +24,9 @@ import java.util.List;
 
 public class SearchReadsRequest extends DataTransferObject {
 
+  private static final ReflectiveHashCodeAndEquals<SearchReadsRequest> HASH_CODE_AND_EQUALS =
+      ReflectiveHashCodeAndEquals.create(SearchReadsRequest.class);
+
   @JsonCreator public static SearchReadsRequest create(
       @JsonProperty("datasetIds") List<String> datasetIds,
       @JsonProperty("readsetIds") List<String> readsetIds,
@@ -62,6 +65,10 @@ public class SearchReadsRequest extends DataTransferObject {
     this.pageToken = pageToken;
   }
 
+  @Override public boolean equals(Object obj) {
+    return HASH_CODE_AND_EQUALS.equals(this, obj);
+  }
+
   public List<String> getDatasetIds() {
     return datasetIds;
   }
@@ -84,5 +91,9 @@ public class SearchReadsRequest extends DataTransferObject {
 
   public Long getSequenceStart() {
     return sequenceStart;
+  }
+
+  @Override public int hashCode() {
+    return HASH_CODE_AND_EQUALS.hashCode(this);
   }
 }

@@ -24,6 +24,9 @@ import java.util.List;
 
 public class SearchReadsResponse extends DataTransferObject {
 
+  private static final ReflectiveHashCodeAndEquals<SearchReadsResponse> HASH_CODE_AND_EQUALS =
+      ReflectiveHashCodeAndEquals.create(SearchReadsResponse.class);
+
   @JsonCreator public static SearchReadsResponse create(
       @JsonProperty("reads") List<Read> reads,
       @JsonProperty("nextPageToken") String nextPageToken) {
@@ -38,11 +41,19 @@ public class SearchReadsResponse extends DataTransferObject {
     this.nextPageToken = nextPageToken;
   }
 
+  @Override public boolean equals(Object obj) {
+    return HASH_CODE_AND_EQUALS.equals(this, obj);
+  }
+
   public String getNextPageToken() {
     return nextPageToken;
   }
 
   public List<Read> getReads() {
     return reads;
+  }
+
+  @Override public int hashCode() {
+    return HASH_CODE_AND_EQUALS.hashCode(this);
   }
 }

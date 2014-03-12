@@ -1,71 +1,96 @@
 /*
-Copyright 2014 Google Inc. All rights reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+ *Copyright 2014 Google Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.cloud.genomics.localrepo;
 
-import static java.beans.Introspector.getBeanInfo;
-
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.ObjectWriter;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
+import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Objects;
 
 public abstract class DataTransferObject {
 
-  static final ObjectMapper OBJECT_MAPPER =
-      new ObjectMapper().setSerializationInclusion(Inclusion.NON_NULL);
+  protected static class ReflectiveHashCodeAndEquals<T extends DataTransferObject> {
 
-  private static final ObjectWriter OBJECT_WRITER =
-      OBJECT_MAPPER.writerWithDefaultPrettyPrinter();
-
-  @Override public final boolean equals(Object obj) {
-    Class<?> clazz = getClass();
-    if (null != obj && clazz == obj.getClass()) {
+    public static <T extends DataTransferObject> ReflectiveHashCodeAndEquals<T> create(
+        Class<T> clazz) {
       try {
-        for (PropertyDescriptor descriptor : getBeanInfo(clazz).getPropertyDescriptors()) {
-          Method method = descriptor.getReadMethod();
-          if (!Objects.equals(method.invoke(this), method.invoke(obj))) {
-            return false;
-          }
+        ImmutableList.Builder<Method> accessors = ImmutableList.builder();
+        for (PropertyDescriptor descriptor :
+            Introspector.getBeanInfo(clazz).getPropertyDescriptors()) {
+          accessors.add(descriptor.getReadMethod());
         }
+        return new ReflectiveHashCodeAndEquals<>(clazz, accessors.build());
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
-      return true;
     }
-    return false;
+
+    private static Object invoke(Method accessor, Object target) {
+      try {
+        return accessor.invoke(target);
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
+    private final List<Method> accessors;
+    private final Class<T> clazz;
+
+    private ReflectiveHashCodeAndEquals(Class<T> clazz, List<Method> accessors) {
+      this.clazz = clazz;
+      this.accessors = accessors;
+    }
+
+    public boolean equals(T lhs, Object rhs) {
+      if (null != rhs && clazz == rhs.getClass()) {
+        for (Method accessor : accessors) {
+          if (!Objects.equals(invoke(accessor, lhs), invoke(accessor, rhs))) {
+            return false;
+          }
+        }
+        return true;
+      }
+      return false;
+    }
+
+    public int hashCode(T obj) {
+      Object[] values = new Object[accessors.size()];
+      for (
+          ListIterator<Method> iterator = accessors.listIterator();
+          iterator.hasNext();
+          values[iterator.nextIndex()] = invoke(iterator.next(), obj));
+      return Objects.hash(values);
+    }
   }
 
-  @Override public final int hashCode() {
-    try {
-      Collection<Object> values = new ArrayList<>();
-      for (PropertyDescriptor descriptor : getBeanInfo(getClass()).getPropertyDescriptors()) {
-        values.add(descriptor.getReadMethod().invoke(this));
-      }
-      return Objects.hash(values.toArray());
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
+  static final ObjectMapper OBJECT_MAPPER =
+      new ObjectMapper().setSerializationInclusion(Inclusion.NON_NULL);
+
+  private static final ObjectWriter OBJECT_WRITER = OBJECT_MAPPER.writerWithDefaultPrettyPrinter();
+
+  @Override public abstract boolean equals(Object obj);
+
+  @Override public abstract int hashCode();
 
   @Override public final String toString() {
     try {

@@ -17,7 +17,6 @@ package com.google.cloud.genomics.localrepo;
 
 import com.google.cloud.genomics.localrepo.BamFile.IndexedBamFile;
 import com.google.cloud.genomics.localrepo.dto.Readset;
-import com.google.cloud.genomics.localrepo.dto.Readset.FileData;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -29,12 +28,19 @@ import net.sf.samtools.SAMFileHeader.SortOrder;
 
 import org.joda.time.DateTimeUtils;
 
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
 
 public class BamFilesReadset {
+
+  private static final Comparator<Readset.FileData> FILE_URL_COMPARATOR =
+      comparatorFromFunction(
+          new Function<Readset.FileData, String>() {
+            @Override public String apply(Readset.FileData fileData) {
+              return fileData.getFileUri();
+            }
+          });
 
   public static final Function<BamFilesReadset, Set<IndexedBamFile>> GET_BAM_FILES =
       new Function<BamFilesReadset, Set<IndexedBamFile>>() {
@@ -71,6 +77,16 @@ public class BamFilesReadset {
         }
       };
 
+  private static <X, Y extends Comparable<? super Y>> Comparator<X> comparatorFromFunction(
+      final Function<? super X, ? extends Y> accessor) {
+    return
+        new Comparator<X>() {
+          @Override public int compare(X lhs, X rhs) {
+            return accessor.apply(lhs).compareTo(accessor.apply(rhs));
+          }
+        };
+  }
+
   public static BamFilesReadset create(
       String readsetId,
       String sample,
@@ -92,21 +108,19 @@ public class BamFilesReadset {
               getSample(),
               getDatasetId(),
               DateTimeUtils.currentTimeMillis(),
-              FluentIterable.from(getBamFiles()).transform(BamFile.GET_FILE_DATA).toSortedList(new Comparator<FileData>() {
-                @Override public int compare(FileData f1, FileData f2) {
-                  return f1.getFileUri().compareTo(f2.getFileUri());
-                }
-              }));
+              FluentIterable.from(getBamFiles())
+                  .transform(BamFile.GET_FILE_DATA)
+                  .toSortedList(FILE_URL_COMPARATOR));
         }
       });
 
   private final Supplier<SAMFileHeader> header = Suppliers.memoize(
       new Supplier<SAMFileHeader>() {
-        @Override
-        public SAMFileHeader get() {
-          Collection<SAMFileHeader> headers =
-              FluentIterable.from(bamFiles).transform(BamFile.GET_HEADER).toList();
-          return new SamFileHeaderMerger(SortOrder.coordinate, headers, true).getMergedHeader();
+        @Override public SAMFileHeader get() {
+          return new SamFileHeaderMerger(
+              SortOrder.coordinate,
+              FluentIterable.from(bamFiles).transform(BamFile.GET_HEADER).toList(),
+              true).getMergedHeader();
         }
       });
 

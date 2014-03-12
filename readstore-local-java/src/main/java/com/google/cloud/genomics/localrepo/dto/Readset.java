@@ -29,6 +29,9 @@ public class Readset extends DataTransferObject {
 
     public static class Header extends DataTransferObject {
 
+      private static final ReflectiveHashCodeAndEquals<Header> HASH_CODE_AND_EQUALS =
+          ReflectiveHashCodeAndEquals.create(Header.class);
+
       @JsonCreator public static Header create(
           @JsonProperty("version") String version,
           @JsonProperty("sortingOrder") String sortingOrder) {
@@ -45,6 +48,10 @@ public class Readset extends DataTransferObject {
         this.sortingOrder = sortingOrder;
       }
 
+      @Override public boolean equals(Object obj) {
+        return HASH_CODE_AND_EQUALS.equals(this, obj);
+      }
+
       public String getSortingOrder() {
         return sortingOrder;
       }
@@ -52,9 +59,16 @@ public class Readset extends DataTransferObject {
       public String getVersion() {
         return version;
       }
+
+      @Override public int hashCode() {
+        return HASH_CODE_AND_EQUALS.hashCode(this);
+      }
     }
 
     public static class Program extends DataTransferObject {
+
+      private static final ReflectiveHashCodeAndEquals<Program> HASH_CODE_AND_EQUALS =
+          ReflectiveHashCodeAndEquals.create(Program.class);
 
       @JsonCreator public static Program create(
           @JsonProperty("id") String id,
@@ -84,6 +98,10 @@ public class Readset extends DataTransferObject {
         this.version = version;
       }
 
+      @Override public boolean equals(Object obj) {
+        return HASH_CODE_AND_EQUALS.equals(this, obj);
+      }
+
       public String getCommandLine() {
         return commandLine;
       }
@@ -103,6 +121,10 @@ public class Readset extends DataTransferObject {
       public String getVersion() {
         return version;
       }
+
+      @Override public int hashCode() {
+        return HASH_CODE_AND_EQUALS.hashCode(this);
+      }
     }
 
     public static class ReadGroup extends DataTransferObject {
@@ -113,6 +135,9 @@ public class Readset extends DataTransferObject {
               return readGroup.getId();
             }
           };
+
+      private static final ReflectiveHashCodeAndEquals<ReadGroup> HASH_CODE_AND_EQUALS =
+          ReflectiveHashCodeAndEquals.create(ReadGroup.class);
 
       @JsonCreator public static ReadGroup create(
           @JsonProperty("id") String id,
@@ -182,6 +207,10 @@ public class Readset extends DataTransferObject {
         this.sample = sample;
       }
 
+      @Override public boolean equals(Object obj) {
+        return HASH_CODE_AND_EQUALS.equals(this, obj);
+      }
+
       public String getDate() {
         return date;
       }
@@ -229,9 +258,16 @@ public class Readset extends DataTransferObject {
       public String getSequencingTechnology() {
         return sequencingTechnology;
       }
+
+      @Override public int hashCode() {
+        return HASH_CODE_AND_EQUALS.hashCode(this);
+      }
     }
 
     public static class RefSequence extends DataTransferObject {
+
+      private static final ReflectiveHashCodeAndEquals<RefSequence> HASH_CODE_AND_EQUALS =
+          ReflectiveHashCodeAndEquals.create(RefSequence.class);
 
       @JsonCreator public static RefSequence create(
           @JsonProperty("name") String name,
@@ -265,6 +301,10 @@ public class Readset extends DataTransferObject {
         this.uri = uri;
       }
 
+      @Override public boolean equals(Object obj) {
+        return HASH_CODE_AND_EQUALS.equals(this, obj);
+      }
+
       public String getAssemblyId() {
         return assemblyId;
       }
@@ -288,7 +328,14 @@ public class Readset extends DataTransferObject {
       public String getUri() {
         return uri;
       }
+
+      @Override public int hashCode() {
+        return HASH_CODE_AND_EQUALS.hashCode(this);
+      }
     }
+
+    private static final ReflectiveHashCodeAndEquals<FileData> HASH_CODE_AND_EQUALS =
+        ReflectiveHashCodeAndEquals.create(FileData.class);
 
     @JsonCreator public static FileData create(
         @JsonProperty("fileUri") String fileUri,
@@ -322,6 +369,10 @@ public class Readset extends DataTransferObject {
       this.comments = comments;
     }
 
+    @Override public boolean equals(Object obj) {
+      return HASH_CODE_AND_EQUALS.equals(this, obj);
+    }
+
     public List<String> getComments() {
       return comments;
     }
@@ -345,7 +396,14 @@ public class Readset extends DataTransferObject {
     public List<RefSequence> getRefSequences() {
       return refSequences;
     }
+
+    @Override public int hashCode() {
+      return HASH_CODE_AND_EQUALS.hashCode(this);
+    }
   }
+
+  private static final ReflectiveHashCodeAndEquals<Readset> HASH_CODE_AND_EQUALS =
+      ReflectiveHashCodeAndEquals.create(Readset.class);
 
   @JsonCreator public static Readset create(
       @JsonProperty("id") String id,
@@ -375,6 +433,10 @@ public class Readset extends DataTransferObject {
     this.fileData = fileData;
   }
 
+  @Override public boolean equals(Object obj) {
+    return HASH_CODE_AND_EQUALS.equals(this, obj);
+  }
+
   public long getCreated() {
     return created;
   }
@@ -393,5 +455,9 @@ public class Readset extends DataTransferObject {
 
   public String getName() {
     return name;
+  }
+
+  @Override public int hashCode() {
+    return HASH_CODE_AND_EQUALS.hashCode(this);
   }
 }
