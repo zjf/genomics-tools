@@ -38,7 +38,7 @@ public final class Server {
   public static final class Builder {
 
     private static final String DEFAULT_PATH = "";
-    private static final int DEFAULT_PORT = 8080;
+    private static final int DEFAULT_PORT = 5000;
     private static final Collection<DatasetDirectory> DEFAULT_DATASETS = Collections.emptyList();
 
     private String path = DEFAULT_PATH;
