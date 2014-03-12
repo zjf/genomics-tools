@@ -15,6 +15,9 @@ limitations under the License.
 */
 package com.google.cloud.genomics.localrepo;
 
+import com.google.common.base.Function;
+import com.google.common.collect.FluentIterable;
+
 import org.codehaus.jackson.jaxrs.JacksonJaxbJsonProvider;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
@@ -26,6 +29,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
 
 public final class Server {
@@ -87,12 +91,27 @@ public final class Server {
     }
   }
 
+  private static final Function<Map.Entry<String, String>, DatasetDirectory> CREATE_DATASET =
+      new Function<Map.Entry<String, String>, DatasetDirectory>() {
+        @Override public DatasetDirectory apply(Map.Entry<String, String> entry) {
+          return DatasetDirectory.create(entry.getKey(), entry.getValue());
+        }
+      };
+
   public static Builder builder() {
     return new Builder();
   }
 
   public static void main(String[] args) throws Exception {
-    builder().setDatasets(CommandLineArguments.parse(args).getDatasets()).build().start();
+    CommandLineArguments cmdLine = CommandLineArguments.parse(args);
+    builder()
+        .setPort(cmdLine.getPort())
+        .setDatasets(
+            FluentIterable.from(cmdLine.getDatasets().entrySet())
+                .transform(CREATE_DATASET)
+                .toList())
+        .build()
+        .start();
     Thread.currentThread().join();
   }
 
