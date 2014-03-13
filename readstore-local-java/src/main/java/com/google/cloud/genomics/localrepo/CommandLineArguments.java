@@ -113,13 +113,15 @@ public class CommandLineArguments {
 
     final Object getValue(CommandLine commandLine) {
       ImmutableList.Builder<MatchResult> results = ImmutableList.builder();
-      for (String value : commandLine.getOptionValues(opt)) {
-        Matcher matcher = pattern.matcher(value);
-        if (!matcher.matches()) {
-          throw new IllegalArgumentException(
-              String.format("Flag '%s': \"%s\" doesn't match regex \"%s\"", longOpt, value, regex));
+      if (commandLine.hasOption(opt)) {
+        for (String value : commandLine.getOptionValues(opt)) {
+          Matcher matcher = pattern.matcher(value);
+          if (!matcher.matches()) {
+            throw new IllegalArgumentException(
+                String.format("Flag '%s': \"%s\" doesn't match regex \"%s\"", longOpt, value, regex));
+          }
+          results.add(matcher);
         }
-        results.add(matcher);
       }
       return getValue(results.build());
     }
