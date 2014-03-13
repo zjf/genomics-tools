@@ -17,7 +17,7 @@
 package com.google.api.services.genomics.model;
 
 /**
- * Model definition for HeaderSection.
+ * The header section of the BAM/SAM file.
  *
  * <p> This is the Java data model class that specifies how to parse/serialize into the JSON that is
  * transmitted over HTTP when working with the Genomics API. For a detailed explanation see:

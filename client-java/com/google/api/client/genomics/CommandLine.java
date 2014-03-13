@@ -49,11 +49,6 @@ class CommandLine {
       usage = "Path to client_secrets.json")
   public String clientSecretsFilename = "client_secrets.json";
 
-  @Option(name = "--project_id",
-      metaVar = "<id>",
-      usage = "The Google Cloud project number.")
-  public String projectId = "";
-
   @Option(name = "--dataset_id",
       metaVar = "<dataset_id>",
       usage = "The Genomics API dataset ID.")

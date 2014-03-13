@@ -17,7 +17,8 @@
 package com.google.api.services.genomics.model;
 
 /**
- * Model definition for Read.
+ * A Read is a group of bases that may or may not have been aligned to a reference. It contains
+ * quality information and other metadata.
  *
  * <p> This is the Java data model class that specifies how to parse/serialize into the JSON that is
  * transmitted over HTTP when working with the Genomics API. For a detailed explanation see:
@@ -38,7 +39,7 @@ public final class Read extends com.google.api.client.json.GenericJson {
 
   /**
    * Represents the quality of each base in this read. Each character represents one base. To get
-   * the quality, take the ASCII value of the character and subtract 33.(QUAL)
+   * the quality, take the ASCII value of the character and subtract 33. (QUAL)
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
@@ -127,11 +128,11 @@ public final class Read extends com.google.api.client.json.GenericJson {
   private java.lang.String referenceSequenceName;
 
   /**
-   * A list of additional read information. (TAG)
+   * A map of additional read information. (TAG)
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private java.util.List<Tag> tags;
+  private java.util.Map<String, java.util.List<java.lang.String>> tags;
 
   /**
    * Length of the original piece of dna that produced both this read and the paired read. (TLEN)
@@ -161,7 +162,7 @@ public final class Read extends com.google.api.client.json.GenericJson {
 
   /**
    * Represents the quality of each base in this read. Each character represents one base. To get
-   * the quality, take the ASCII value of the character and subtract 33.(QUAL)
+   * the quality, take the ASCII value of the character and subtract 33. (QUAL)
    * @return value or {@code null} for none
    */
   public java.lang.String getBaseQuality() {
@@ -170,7 +171,7 @@ public final class Read extends com.google.api.client.json.GenericJson {
 
   /**
    * Represents the quality of each base in this read. Each character represents one base. To get
-   * the quality, take the ASCII value of the character and subtract 33.(QUAL)
+   * the quality, take the ASCII value of the character and subtract 33. (QUAL)
    * @param baseQuality baseQuality or {@code null} for none
    */
   public Read setBaseQuality(java.lang.String baseQuality) {
@@ -376,18 +377,18 @@ public final class Read extends com.google.api.client.json.GenericJson {
   }
 
   /**
-   * A list of additional read information. (TAG)
+   * A map of additional read information. (TAG)
    * @return value or {@code null} for none
    */
-  public java.util.List<Tag> getTags() {
+  public java.util.Map<String, java.util.List<java.lang.String>> getTags() {
     return tags;
   }
 
   /**
-   * A list of additional read information. (TAG)
+   * A map of additional read information. (TAG)
    * @param tags tags or {@code null} for none
    */
-  public Read setTags(java.util.List<Tag> tags) {
+  public Read setTags(java.util.Map<String, java.util.List<java.lang.String>> tags) {
     this.tags = tags;
     return this;
   }

@@ -17,7 +17,7 @@
 package com.google.api.services.genomics.model;
 
 /**
- * Model definition for ListReadsResponse.
+ * The dataset list response.
  *
  * <p> This is the Java data model class that specifies how to parse/serialize into the JSON that is
  * transmitted over HTTP when working with the Genomics API. For a detailed explanation see:
@@ -26,7 +26,20 @@ package com.google.api.services.genomics.model;
  *
  */
 @SuppressWarnings("javadoc")
-public final class ListReadsResponse extends com.google.api.client.json.GenericJson {
+public final class ListDatasetsResponse extends com.google.api.client.json.GenericJson {
+
+  /**
+   * The list of matching Datasets.
+   * The value may be {@code null}.
+   */
+  @com.google.api.client.util.Key
+  private java.util.List<Dataset> datasets;
+
+  static {
+    // hack to force ProGuard to consider Dataset used, since otherwise it would be stripped out
+    // see http://code.google.com/p/google-api-java-client/issues/detail?id=528
+    com.google.api.client.util.Data.nullOf(Dataset.class);
+  }
 
   /**
    * The continuation token, which is used to page through large result sets. Provide this value in
@@ -38,12 +51,21 @@ public final class ListReadsResponse extends com.google.api.client.json.GenericJ
   private java.lang.String nextPageToken;
 
   /**
-   * The list of matching Reads. The resulting Reads are sorted by position. Unmapped reads, which
-   * have no position, are returned last and are further sorted by name.
-   * The value may be {@code null}.
+   * The list of matching Datasets.
+   * @return value or {@code null} for none
    */
-  @com.google.api.client.util.Key
-  private java.util.List<Read> reads;
+  public java.util.List<Dataset> getDatasets() {
+    return datasets;
+  }
+
+  /**
+   * The list of matching Datasets.
+   * @param datasets datasets or {@code null} for none
+   */
+  public ListDatasetsResponse setDatasets(java.util.List<Dataset> datasets) {
+    this.datasets = datasets;
+    return this;
+  }
 
   /**
    * The continuation token, which is used to page through large result sets. Provide this value in
@@ -61,38 +83,19 @@ public final class ListReadsResponse extends com.google.api.client.json.GenericJ
    * aren't any additional results.
    * @param nextPageToken nextPageToken or {@code null} for none
    */
-  public ListReadsResponse setNextPageToken(java.lang.String nextPageToken) {
+  public ListDatasetsResponse setNextPageToken(java.lang.String nextPageToken) {
     this.nextPageToken = nextPageToken;
     return this;
   }
 
-  /**
-   * The list of matching Reads. The resulting Reads are sorted by position. Unmapped reads, which
-   * have no position, are returned last and are further sorted by name.
-   * @return value or {@code null} for none
-   */
-  public java.util.List<Read> getReads() {
-    return reads;
-  }
-
-  /**
-   * The list of matching Reads. The resulting Reads are sorted by position. Unmapped reads, which
-   * have no position, are returned last and are further sorted by name.
-   * @param reads reads or {@code null} for none
-   */
-  public ListReadsResponse setReads(java.util.List<Read> reads) {
-    this.reads = reads;
-    return this;
+  @Override
+  public ListDatasetsResponse set(String fieldName, Object value) {
+    return (ListDatasetsResponse) super.set(fieldName, value);
   }
 
   @Override
-  public ListReadsResponse set(String fieldName, Object value) {
-    return (ListReadsResponse) super.set(fieldName, value);
-  }
-
-  @Override
-  public ListReadsResponse clone() {
-    return (ListReadsResponse) super.clone();
+  public ListDatasetsResponse clone() {
+    return (ListDatasetsResponse) super.clone();
   }
 
 }

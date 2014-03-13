@@ -29,14 +29,10 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.genomics.Genomics;
-import com.google.api.services.genomics.model.GetJobResponse;
-import com.google.api.services.genomics.model.GetReadsetResponse;
+import com.google.api.services.genomics.GenomicsRequest;
 import com.google.api.services.genomics.model.ImportReadsetsRequest;
-import com.google.api.services.genomics.model.ImportReadsetsResponse;
-import com.google.api.services.genomics.model.ListReadsRequest;
-import com.google.api.services.genomics.model.ListReadsResponse;
-import com.google.api.services.genomics.model.ListReadsetsRequest;
-import com.google.api.services.genomics.model.ListReadsetsResponse;
+import com.google.api.services.genomics.model.SearchReadsRequest;
+import com.google.api.services.genomics.model.SearchReadsetsRequest;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -200,11 +196,6 @@ public class GenomicsSample {
     return f.exists() && f.delete();
   }
 
-  private static long parseProjectId(final String projectIdString) {
-    // convert String ProjectId argument to Long
-    return Long.parseLong(projectIdString);
-  }
-
   private static Credential authenticate() throws IOException {
     // Attempt to load client secrets
     clientSecrets = loadClientSecrets(cmdLine.clientSecretsFilename);
@@ -256,8 +247,8 @@ public class GenomicsSample {
       httpTransport = GoogleNetHttpTransport.newTrustedTransport();
 
       // Route to appropriate request method
-      List<String> validRequestTypes = Arrays.asList(
-          "auth", "help", "importreadsets", "listreadsets", "getreadset", "getjob", "listreads");
+      List<String> validRequestTypes = Arrays.asList("auth", "help", "importreadsets",
+          "searchreadsets", "getreadset", "getjob", "searchreads");
       String requestType = cmdLine.remainingArgs.get(0);
       switch(requestType) {
         case "help":
@@ -273,8 +264,8 @@ public class GenomicsSample {
             case "importreadsets":
               importReadsets();
               break;
-            case "listreadsets":
-              listReadsets();
+            case "searchreadsets":
+              searchReadsets();
               break;
             case "getreadset":
               getReadset();
@@ -282,8 +273,8 @@ public class GenomicsSample {
             case "getjob":
               getJob();
               break;
-            case "listreads":
-              listReads();
+            case "searchreads":
+              searchReads();
               break;
             default:
               cmdLine.printHelp("request_type must be one of: " + validRequestTypes + "\n",
@@ -307,6 +298,13 @@ public class GenomicsSample {
     assertOrDie(condition, "");
   }
 
+  private static void executeAndPrint(GenomicsRequest<?> req) throws IOException {
+    if (!cmdLine.fields.isEmpty()) {
+      req.setFields(cmdLine.fields);
+    }
+    System.out.println("result: " + req.execute());
+  }
+
   private static void importReadsets() throws IOException {
     // validate the command line
     assertOrDie(!cmdLine.datasetId.isEmpty(), "Must specify a dataset_id\n");
@@ -317,50 +315,34 @@ public class GenomicsSample {
         .setDatasetId(cmdLine.datasetId)
         .setSourceUris(cmdLine.bamFiles);
     // Invoke import and get response
-    ImportReadsetsResponse result = genomics.readsets().genomicsImport(content).execute();
-    System.out.println("result: " + result);
+    executeAndPrint(genomics.readsets().genomicsImport(content));
   }
 
-  private static void listReadsets() throws IOException {
+  private static void searchReadsets() throws IOException {
     // validate the command line
     assertOrDie(!cmdLine.datasetIds.isEmpty(), "Currently, dataset_ids is required. " +
         "This requirement will go away in the future.\n");
 
-    ListReadsetsRequest content = new ListReadsetsRequest().setDatasetIds(cmdLine.datasetIds);
-    ListReadsetsResponse result = genomics.readsets().search(content)
-        .setFields(cmdLine.fields)
-        .execute();
-    System.out.println("result: " + result);
+    SearchReadsetsRequest content = new SearchReadsetsRequest().setDatasetIds(cmdLine.datasetIds);
+    executeAndPrint(genomics.readsets().search(content));
   }
 
   private static void getReadset() throws IOException {
     // validate the command line
     assertOrDie(!cmdLine.readsetId.isEmpty(), "Must specify a readset_id\n");
-
-    GetReadsetResponse result = genomics.readsets().get(cmdLine.readsetId)
-        .setFields(cmdLine.fields)
-        .execute();
-    System.out.println("result: " + result);
+    executeAndPrint(genomics.readsets().get(cmdLine.readsetId));
   }
 
   private static void getJob() throws IOException {
     // validate the command line
-    assertOrDie(!cmdLine.projectId.isEmpty(), "Currently, project_id is required. " +
-        "This requirement will go away in the future.\n");
     assertOrDie(!cmdLine.jobId.isEmpty(), "Must specify a job_id\n");
 
-    // Create request
-    long projectId = parseProjectId(cmdLine.projectId);
-    GetJobResponse result = genomics.jobs().get(cmdLine.jobId)
-        .setFields(cmdLine.fields)
-        .setProjectId(projectId)
-        .execute();
-    System.out.println("result: " + result);
+    executeAndPrint(genomics.jobs().get(cmdLine.jobId));
   }
 
-  private static void listReads() throws IOException {
+  private static void searchReads() throws IOException {
     // Create request.
-    ListReadsRequest content = new ListReadsRequest()
+    SearchReadsRequest content = new SearchReadsRequest()
         .setReadsetIds(cmdLine.readsetIds)
         .setPageToken(cmdLine.pageToken);
 
@@ -377,11 +359,6 @@ public class GenomicsSample {
           .setSequenceStart(BigInteger.valueOf(cmdLine.sequenceStart.intValue()))
           .setSequenceEnd(BigInteger.valueOf(cmdLine.sequenceEnd.intValue()));
     }
-
-    // Invoke query and get response
-    ListReadsResponse result = genomics.reads().search(content)
-        .setFields(cmdLine.fields)
-        .execute();
-    System.out.println("result: " + result);
+    executeAndPrint(genomics.reads().search(content));
   }
 }

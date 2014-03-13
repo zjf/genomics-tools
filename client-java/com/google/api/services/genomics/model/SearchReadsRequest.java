@@ -17,7 +17,7 @@
 package com.google.api.services.genomics.model;
 
 /**
- * Model definition for ListReadsRequest.
+ * The read search request.
  *
  * <p> This is the Java data model class that specifies how to parse/serialize into the JSON that is
  * transmitted over HTTP when working with the Genomics API. For a detailed explanation see:
@@ -26,14 +26,15 @@ package com.google.api.services.genomics.model;
  *
  */
 @SuppressWarnings("javadoc")
-public final class ListReadsRequest extends com.google.api.client.json.GenericJson {
+public final class SearchReadsRequest extends com.google.api.client.json.GenericJson {
 
   /**
-   * The list of fields to be returned with this query. Leaving this blank returns all fields.
+   * If specified, will restrict this query to reads within the given datasets. At least one dataset
+   * ID or a readset ID must be provided.
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private java.util.List<java.lang.String> includeFields;
+  private java.util.List<java.lang.String> datasetIds;
 
   /**
    * The continuation token, which is used to page through large result sets. To get the next page
@@ -76,19 +77,21 @@ public final class ListReadsRequest extends com.google.api.client.json.GenericJs
   private java.math.BigInteger sequenceStart;
 
   /**
-   * The list of fields to be returned with this query. Leaving this blank returns all fields.
+   * If specified, will restrict this query to reads within the given datasets. At least one dataset
+   * ID or a readset ID must be provided.
    * @return value or {@code null} for none
    */
-  public java.util.List<java.lang.String> getIncludeFields() {
-    return includeFields;
+  public java.util.List<java.lang.String> getDatasetIds() {
+    return datasetIds;
   }
 
   /**
-   * The list of fields to be returned with this query. Leaving this blank returns all fields.
-   * @param includeFields includeFields or {@code null} for none
+   * If specified, will restrict this query to reads within the given datasets. At least one dataset
+   * ID or a readset ID must be provided.
+   * @param datasetIds datasetIds or {@code null} for none
    */
-  public ListReadsRequest setIncludeFields(java.util.List<java.lang.String> includeFields) {
-    this.includeFields = includeFields;
+  public SearchReadsRequest setDatasetIds(java.util.List<java.lang.String> datasetIds) {
+    this.datasetIds = datasetIds;
     return this;
   }
 
@@ -106,7 +109,7 @@ public final class ListReadsRequest extends com.google.api.client.json.GenericJs
    * of results, set this parameter to the value of "nextPageToken" from the previous response.
    * @param pageToken pageToken or {@code null} for none
    */
-  public ListReadsRequest setPageToken(java.lang.String pageToken) {
+  public SearchReadsRequest setPageToken(java.lang.String pageToken) {
     this.pageToken = pageToken;
     return this;
   }
@@ -125,7 +128,7 @@ public final class ListReadsRequest extends com.google.api.client.json.GenericJs
    * ID or a readset ID must be provided.
    * @param readsetIds readsetIds or {@code null} for none
    */
-  public ListReadsRequest setReadsetIds(java.util.List<java.lang.String> readsetIds) {
+  public SearchReadsRequest setReadsetIds(java.util.List<java.lang.String> readsetIds) {
     this.readsetIds = readsetIds;
     return this;
   }
@@ -144,7 +147,7 @@ public final class ListReadsRequest extends com.google.api.client.json.GenericJs
    * defaults to the sequence's length.
    * @param sequenceEnd sequenceEnd or {@code null} for none
    */
-  public ListReadsRequest setSequenceEnd(java.math.BigInteger sequenceEnd) {
+  public SearchReadsRequest setSequenceEnd(java.math.BigInteger sequenceEnd) {
     this.sequenceEnd = sequenceEnd;
     return this;
   }
@@ -163,7 +166,7 @@ public final class ListReadsRequest extends com.google.api.client.json.GenericJs
    * all sequences, including unmapped reads.
    * @param sequenceName sequenceName or {@code null} for none
    */
-  public ListReadsRequest setSequenceName(java.lang.String sequenceName) {
+  public SearchReadsRequest setSequenceName(java.lang.String sequenceName) {
     this.sequenceName = sequenceName;
     return this;
   }
@@ -182,19 +185,19 @@ public final class ListReadsRequest extends com.google.api.client.json.GenericJs
    * 1.
    * @param sequenceStart sequenceStart or {@code null} for none
    */
-  public ListReadsRequest setSequenceStart(java.math.BigInteger sequenceStart) {
+  public SearchReadsRequest setSequenceStart(java.math.BigInteger sequenceStart) {
     this.sequenceStart = sequenceStart;
     return this;
   }
 
   @Override
-  public ListReadsRequest set(String fieldName, Object value) {
-    return (ListReadsRequest) super.set(fieldName, value);
+  public SearchReadsRequest set(String fieldName, Object value) {
+    return (SearchReadsRequest) super.set(fieldName, value);
   }
 
   @Override
-  public ListReadsRequest clone() {
-    return (ListReadsRequest) super.clone();
+  public SearchReadsRequest clone() {
+    return (SearchReadsRequest) super.clone();
   }
 
 }

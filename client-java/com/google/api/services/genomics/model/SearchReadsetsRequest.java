@@ -17,7 +17,7 @@
 package com.google.api.services.genomics.model;
 
 /**
- * Model definition for ListReadsetsRequest.
+ * The readset search request.
  *
  * <p> This is the Java data model class that specifies how to parse/serialize into the JSON that is
  * transmitted over HTTP when working with the Genomics API. For a detailed explanation see:
@@ -26,7 +26,7 @@ package com.google.api.services.genomics.model;
  *
  */
 @SuppressWarnings("javadoc")
-public final class ListReadsetsRequest extends com.google.api.client.json.GenericJson {
+public final class SearchReadsetsRequest extends com.google.api.client.json.GenericJson {
 
   /**
    * Restricts this query to readsets within the given datasets. At least one ID must be provided.
@@ -55,7 +55,7 @@ public final class ListReadsetsRequest extends com.google.api.client.json.Generi
    * Restricts this query to readsets within the given datasets. At least one ID must be provided.
    * @param datasetIds datasetIds or {@code null} for none
    */
-  public ListReadsetsRequest setDatasetIds(java.util.List<java.lang.String> datasetIds) {
+  public SearchReadsetsRequest setDatasetIds(java.util.List<java.lang.String> datasetIds) {
     this.datasetIds = datasetIds;
     return this;
   }
@@ -74,19 +74,19 @@ public final class ListReadsetsRequest extends com.google.api.client.json.Generi
    * of results, set this parameter to the value of "nextPageToken" from the previous response.
    * @param pageToken pageToken or {@code null} for none
    */
-  public ListReadsetsRequest setPageToken(java.lang.String pageToken) {
+  public SearchReadsetsRequest setPageToken(java.lang.String pageToken) {
     this.pageToken = pageToken;
     return this;
   }
 
   @Override
-  public ListReadsetsRequest set(String fieldName, Object value) {
-    return (ListReadsetsRequest) super.set(fieldName, value);
+  public SearchReadsetsRequest set(String fieldName, Object value) {
+    return (SearchReadsetsRequest) super.set(fieldName, value);
   }
 
   @Override
-  public ListReadsetsRequest clone() {
-    return (ListReadsetsRequest) super.clone();
+  public SearchReadsetsRequest clone() {
+    return (SearchReadsetsRequest) super.clone();
   }
 
 }

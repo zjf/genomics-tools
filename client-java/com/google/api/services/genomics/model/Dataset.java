@@ -17,7 +17,7 @@
 package com.google.api.services.genomics.model;
 
 /**
- * Model definition for UpdateDatasetRequest.
+ * A Dataset is a collection of genomic data.
  *
  * <p> This is the Java data model class that specifies how to parse/serialize into the JSON that is
  * transmitted over HTTP when working with the Genomics API. For a detailed explanation see:
@@ -26,7 +26,7 @@ package com.google.api.services.genomics.model;
  *
  */
 @SuppressWarnings("javadoc")
-public final class UpdateDatasetRequest extends com.google.api.client.json.GenericJson {
+public final class Dataset extends com.google.api.client.json.GenericJson {
 
   /**
    * The dataset ID.
@@ -62,7 +62,7 @@ public final class UpdateDatasetRequest extends com.google.api.client.json.Gener
    * The dataset ID.
    * @param id id or {@code null} for none
    */
-  public UpdateDatasetRequest setId(java.lang.String id) {
+  public Dataset setId(java.lang.String id) {
     this.id = id;
     return this;
   }
@@ -81,7 +81,7 @@ public final class UpdateDatasetRequest extends com.google.api.client.json.Gener
    * inherits viewing permissions from its project.
    * @param isPublic isPublic or {@code null} for none
    */
-  public UpdateDatasetRequest setIsPublic(java.lang.Boolean isPublic) {
+  public Dataset setIsPublic(java.lang.Boolean isPublic) {
     this.isPublic = isPublic;
     return this;
   }
@@ -98,19 +98,19 @@ public final class UpdateDatasetRequest extends com.google.api.client.json.Gener
    * The Google Cloud Console project number that this dataset belongs to.
    * @param projectId projectId or {@code null} for none
    */
-  public UpdateDatasetRequest setProjectId(java.lang.Long projectId) {
+  public Dataset setProjectId(java.lang.Long projectId) {
     this.projectId = projectId;
     return this;
   }
 
   @Override
-  public UpdateDatasetRequest set(String fieldName, Object value) {
-    return (UpdateDatasetRequest) super.set(fieldName, value);
+  public Dataset set(String fieldName, Object value) {
+    return (Dataset) super.set(fieldName, value);
   }
 
   @Override
-  public UpdateDatasetRequest clone() {
-    return (UpdateDatasetRequest) super.clone();
+  public Dataset clone() {
+    return (Dataset) super.clone();
   }
 
 }

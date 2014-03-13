@@ -17,7 +17,7 @@
 package com.google.api.services.genomics.model;
 
 /**
- * Model definition for ImportReadsetsResponse.
+ * The readset import response.
  *
  * <p> This is the Java data model class that specifies how to parse/serialize into the JSON that is
  * transmitted over HTTP when working with the Genomics API. For a detailed explanation see:
@@ -36,13 +36,6 @@ public final class ImportReadsetsResponse extends com.google.api.client.json.Gen
   private java.lang.String jobId;
 
   /**
-   * IDs of the readsets to which data is being imported.
-   * The value may be {@code null}.
-   */
-  @com.google.api.client.util.Key
-  private java.util.List<java.lang.String> readsetIds;
-
-  /**
    * A job ID that can be used to get status information.
    * @return value or {@code null} for none
    */
@@ -56,23 +49,6 @@ public final class ImportReadsetsResponse extends com.google.api.client.json.Gen
    */
   public ImportReadsetsResponse setJobId(java.lang.String jobId) {
     this.jobId = jobId;
-    return this;
-  }
-
-  /**
-   * IDs of the readsets to which data is being imported.
-   * @return value or {@code null} for none
-   */
-  public java.util.List<java.lang.String> getReadsetIds() {
-    return readsetIds;
-  }
-
-  /**
-   * IDs of the readsets to which data is being imported.
-   * @param readsetIds readsetIds or {@code null} for none
-   */
-  public ImportReadsetsResponse setReadsetIds(java.util.List<java.lang.String> readsetIds) {
-    this.readsetIds = readsetIds;
     return this;
   }
 

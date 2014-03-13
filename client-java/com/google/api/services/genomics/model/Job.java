@@ -17,7 +17,7 @@
 package com.google.api.services.genomics.model;
 
 /**
- * Model definition for GetJobResponse.
+ * A Job represents an ongoing process which can be monitored for status information.
  *
  * <p> This is the Java data model class that specifies how to parse/serialize into the JSON that is
  * transmitted over HTTP when working with the Genomics API. For a detailed explanation see:
@@ -26,7 +26,7 @@ package com.google.api.services.genomics.model;
  *
  */
 @SuppressWarnings("javadoc")
-public final class GetJobResponse extends com.google.api.client.json.GenericJson {
+public final class Job extends com.google.api.client.json.GenericJson {
 
   /**
    * A more detailed description of this job's current status.
@@ -76,7 +76,7 @@ public final class GetJobResponse extends com.google.api.client.json.GenericJson
    * A more detailed description of this job's current status.
    * @param description description or {@code null} for none
    */
-  public GetJobResponse setDescription(java.lang.String description) {
+  public Job setDescription(java.lang.String description) {
     this.description = description;
     return this;
   }
@@ -93,7 +93,7 @@ public final class GetJobResponse extends com.google.api.client.json.GenericJson
    * The job ID.
    * @param id id or {@code null} for none
    */
-  public GetJobResponse setId(java.lang.String id) {
+  public Job setId(java.lang.String id) {
     this.id = id;
     return this;
   }
@@ -112,7 +112,7 @@ public final class GetJobResponse extends com.google.api.client.json.GenericJson
    * successfully imported.
    * @param importedIds importedIds or {@code null} for none
    */
-  public GetJobResponse setImportedIds(java.util.List<java.lang.String> importedIds) {
+  public Job setImportedIds(java.util.List<java.lang.String> importedIds) {
     this.importedIds = importedIds;
     return this;
   }
@@ -129,7 +129,7 @@ public final class GetJobResponse extends com.google.api.client.json.GenericJson
    * The Google Cloud Console project number that this job belongs to.
    * @param projectId projectId or {@code null} for none
    */
-  public GetJobResponse setProjectId(java.lang.Long projectId) {
+  public Job setProjectId(java.lang.Long projectId) {
     this.projectId = projectId;
     return this;
   }
@@ -146,19 +146,19 @@ public final class GetJobResponse extends com.google.api.client.json.GenericJson
    * The status of this job.
    * @param status status or {@code null} for none
    */
-  public GetJobResponse setStatus(java.lang.String status) {
+  public Job setStatus(java.lang.String status) {
     this.status = status;
     return this;
   }
 
   @Override
-  public GetJobResponse set(String fieldName, Object value) {
-    return (GetJobResponse) super.set(fieldName, value);
+  public Job set(String fieldName, Object value) {
+    return (Job) super.set(fieldName, value);
   }
 
   @Override
-  public GetJobResponse clone() {
-    return (GetJobResponse) super.clone();
+  public Job clone() {
+    return (Job) super.clone();
   }
 
 }

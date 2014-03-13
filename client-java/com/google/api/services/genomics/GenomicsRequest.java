@@ -49,7 +49,7 @@ public abstract class GenomicsRequest<T> extends com.google.api.client.googleapi
   private java.lang.String alt;
 
   /**
-   * Data format for the response.    [default: json]
+   * Data format for the response. [default: json]
    */
   public java.lang.String getAlt() {
     return alt;
@@ -124,7 +124,7 @@ public abstract class GenomicsRequest<T> extends com.google.api.client.googleapi
   private java.lang.Boolean prettyPrint;
 
   /**
-   * Returns response with indentations and line breaks.    [default: true]
+   * Returns response with indentations and line breaks. [default: true]
    */
   public java.lang.Boolean getPrettyPrint() {
     return prettyPrint;
