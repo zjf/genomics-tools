@@ -14,7 +14,7 @@ mvn package
 java -cp target/repository-local-java-v1beta-jar-with-dependencies.jar:lib/sam-1.109.jar:lib/picard-1.109.jar com.google.cloud.genomics.localrepo.Server --dataset=testdata:testdata
 ```
 
-* Go to http://localhost:8080/datasets to see your data
+* Go to http://localhost:5000/datasets to see your data.
 
 * To run over your own BAM data, the dataset flag can be modified to point to
 any local file. The flag uses the format --dataset=<id>:<filepath>, where id can

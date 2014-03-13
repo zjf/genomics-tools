@@ -8,6 +8,19 @@
     <packaging>jar</packaging>
     <version>v1beta</version>
 
+    <organization>
+      <name>Google</name>
+      <url>http://www.google.com/</url>
+    </organization>
+
+    <licenses>
+      <license>
+        <name>The Apache Software License, Version 2.0</name>
+        <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        <distribution>repo</distribution>
+      </license>
+    </licenses>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
