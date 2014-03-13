@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.google.cloud.genomics</groupId>
-    <artifactId>repository-local-java</artifactId>
+    <artifactId>readstore-local-java</artifactId>
     <packaging>jar</packaging>
     <version>v1beta</version>
 
