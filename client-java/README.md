@@ -10,22 +10,21 @@ This java client allows users to call the <a href="https://developers.google.com
 ```
 cd genomics-tools/client-java
 mvn package
-cd target
 ```
 
 * Then, follow the <a href="https://developers.google.com/genomics#authenticate">authentication instructions</a> to generate a valid client_secrets.json file.
 
 * Move the client_secrets.json file into the target directory and start the authentication process:
 ```
-java -jar google-api-services-genomics-v1-rev20130925-1.18.0-rc-SNAPSHOT.jar auth
+java -jar target/genomics-tools-client-java-v1beta.jar auth
 ```
 
 * Once authenticated, you can then perform API queries like fetching readsets or reads:
 ```
-java -jar google-api-services-genomics-v1-rev20130925-1.18.0-rc-SNAPSHOT.jar listreadsets --dataset_ids <dataset_id> --fields "readsets(id,name)"
+java -jar target/genomics-tools-client-java-v1beta.jar listreadsets --dataset_ids <dataset_id> --fields "readsets(id,name)"
 ```
 ```
-java -jar google-api-services-genomics-v1-rev20130925-1.18.0-rc-SNAPSHOT.jar listreads --readset_ids <readset_id> --sequence_name 1 --sequence_start 10000 --sequence_end 10000
+java -jar target/genomics-tools-client-java-v1beta.jar listreads --readset_ids <readset_id> --sequence_name 1 --sequence_start 10000 --sequence_end 10000
 ```
 
 ###Code layout
