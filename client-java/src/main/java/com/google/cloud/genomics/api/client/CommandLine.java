@@ -106,6 +106,10 @@ class CommandLine {
       usage = "The end position (1-based, inclusive) of this query.")
   public Integer sequenceEnd = 0;
 
+  public CommandLine() {
+    // For testing
+  }
+
   public CommandLine(String[] args) throws CmdLineException {
     parser = new CmdLineParser(this);
     parser.parseArgument(args);

@@ -31,6 +31,7 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.genomics.Genomics;
 import com.google.api.services.genomics.GenomicsRequest;
 import com.google.api.services.genomics.model.ImportReadsetsRequest;
+import com.google.api.services.genomics.model.Job;
 import com.google.api.services.genomics.model.SearchReadsRequest;
 import com.google.api.services.genomics.model.SearchReadsetsRequest;
 
@@ -40,6 +41,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.IllegalArgumentException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -333,9 +335,9 @@ public class GenomicsSample {
     executeAndPrint(genomics.readsets().get(cmdLine.readsetId));
   }
 
-  private static void getJob() throws IOException {
+  private static void getJob(CommandLine cmdLine, Genomics genomics) throws IllegalArgumentException {
     // validate the command line
-    assertOrDie(!cmdLine.jobId.isEmpty(), "Must specify a job_id\n");
+    assertOrDie(!cmdLine.jobId.isEmpty(), "Must specify a job_id");
 
     executeAndPrint(genomics.jobs().get(cmdLine.jobId));
   }
