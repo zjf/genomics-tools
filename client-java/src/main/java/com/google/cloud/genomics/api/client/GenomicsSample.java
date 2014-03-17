@@ -61,7 +61,6 @@ import javax.annotation.Nullable;
  */
 public class GenomicsSample {
 
-  private static Genomics genomics;
   private static GoogleClientSecrets clientSecrets = null;
   private static final String APPLICATION_NAME = "Google-GenomicsSample/1.0";
   private static NetHttpTransport httpTransport;
@@ -86,7 +85,7 @@ public class GenomicsSample {
       }
     } else {
       System.err.println("Client secrets file " + clientSecretsFilename + " does not exist."
-          + "  Visit https://developers.google.com/genomics/v1beta/quickstart to learn how"
+          + "  Visit https://developers.google.com/genomics to learn how"
           + " to install a client_secrets.json file.  If you have installed a client_secrets.json"
           + " in a specific location, use --client_secrets_filename <path>/client_secrets.json.");
     }
@@ -229,10 +228,6 @@ public class GenomicsSample {
     return credential;
   }
 
-  private static void createGenomicsClient() throws IOException {
-    genomics = buildService(authenticate());
-  }
-
   public static void main(String[] args) {
     try {
       createDotGoogleCloudDirectory();
@@ -240,7 +235,7 @@ public class GenomicsSample {
       cmdLine = new CommandLine(args);
 
       // Show help
-      assertOrDie(!cmdLine.showHelp());
+      assertOrDie(!cmdLine.showHelp(), "");
 
       // Make sure request_type is specified
       assertOrDie(cmdLine.remainingArgs.size() == 1,
@@ -249,10 +244,8 @@ public class GenomicsSample {
       httpTransport = GoogleNetHttpTransport.newTrustedTransport();
 
       // Route to appropriate request method
-      List<String> validRequestTypes = Arrays.asList("auth", "help", "importreadsets",
-          "searchreadsets", "getreadset", "getjob", "searchreads");
       String requestType = cmdLine.remainingArgs.get(0);
-      switch(requestType) {
+      switch (requestType) {
         case "help":
           cmdLine.printHelp("", System.err);
           break;
@@ -261,31 +254,36 @@ public class GenomicsSample {
           authenticate();
           break;
         default:
-          createGenomicsClient();
-          switch(requestType) {
-            case "importreadsets":
-              importReadsets();
-              break;
-            case "searchreadsets":
-              searchReadsets();
-              break;
-            case "getreadset":
-              getReadset();
-              break;
-            case "getjob":
-              getJob();
-              break;
-            case "searchreads":
-              searchReads();
-              break;
-            default:
-              cmdLine.printHelp("request_type must be one of: " + validRequestTypes + "\n",
-                  System.err);
-              return;
+          Genomics genomics = buildService(authenticate());
+          try {
+            executeAndPrint(getRequest(cmdLine, genomics, requestType));
+          } catch (IllegalArgumentException e) {
+            cmdLine.printHelp(e.getMessage() + "\n", System.err);
+            System.exit(0);
           }
       }
     } catch (Throwable t) {
       t.printStackTrace();
+    }
+  }
+
+  private static GenomicsRequest getRequest(CommandLine cmdLine, Genomics genomics, String requestType)
+      throws IOException, IllegalArgumentException {
+    switch (requestType) {
+      case "importreadsets":
+        return importReadsets(cmdLine, genomics);
+      case "searchreadsets":
+        return searchReadsets(cmdLine, genomics);
+      case "getreadset":
+        return getReadset(cmdLine, genomics);
+      case "getjob":
+        return getJob(cmdLine, genomics);
+      case "searchreads":
+        return searchReads(cmdLine, genomics);
+      default:
+        List<String> validRequestTypes = Arrays.asList("auth", "help", "importreadsets",
+            "searchreadsets", "getreadset", "getjob", "searchreads");
+        throw new IllegalArgumentException("request_type must be one of: " + validRequestTypes + "\n");
     }
   }
 
@@ -296,8 +294,10 @@ public class GenomicsSample {
     }
   }
 
-  private static void assertOrDie(boolean condition) throws IOException {
-    assertOrDie(condition, "");
+  private static void assertOrThrow(boolean condition, String headline) throws IllegalArgumentException {
+    if (!condition) {
+      throw new IllegalArgumentException(headline);
+    }
   }
 
   private static void executeAndPrint(GenomicsRequest<?> req) throws IOException {
@@ -307,60 +307,57 @@ public class GenomicsSample {
     System.out.println("result: " + req.execute());
   }
 
-  private static void importReadsets() throws IOException {
-    // validate the command line
-    assertOrDie(!cmdLine.datasetId.isEmpty(), "Must specify a dataset_id\n");
-    assertOrDie(cmdLine.bamFiles.size() > 0, "Must specify at least one BAM file\n");
+  static Genomics.Readsets.GenomicsImport importReadsets(CommandLine cmdLine, Genomics genomics)
+      throws IOException, IllegalArgumentException {
+    assertOrThrow(!cmdLine.datasetId.isEmpty(), "Must specify a dataset_id\n");
+    assertOrThrow(cmdLine.bamFiles.size() > 0, "Must specify at least one BAM file\n");
 
-    // Create request
     ImportReadsetsRequest content = new ImportReadsetsRequest()
         .setDatasetId(cmdLine.datasetId)
         .setSourceUris(cmdLine.bamFiles);
-    // Invoke import and get response
-    executeAndPrint(genomics.readsets().genomicsImport(content));
+    return genomics.readsets().genomicsImport(content);
   }
 
-  private static void searchReadsets() throws IOException {
-    // validate the command line
-    assertOrDie(!cmdLine.datasetIds.isEmpty(), "Currently, dataset_ids is required. " +
-        "This requirement will go away in the future.\n");
+  static Genomics.Readsets.Search searchReadsets(CommandLine cmdLine, Genomics genomics)
+      throws IOException, IllegalArgumentException {
+    assertOrThrow(!cmdLine.datasetIds.isEmpty(), "Currently, dataset_ids is required. " +
+        "This requirement will go away in the future.");
 
     SearchReadsetsRequest content = new SearchReadsetsRequest().setDatasetIds(cmdLine.datasetIds);
-    executeAndPrint(genomics.readsets().search(content));
+    return genomics.readsets().search(content);
   }
 
-  private static void getReadset() throws IOException {
-    // validate the command line
-    assertOrDie(!cmdLine.readsetId.isEmpty(), "Must specify a readset_id\n");
-    executeAndPrint(genomics.readsets().get(cmdLine.readsetId));
+  static Genomics.Readsets.Get getReadset(CommandLine cmdLine, Genomics genomics)
+      throws IOException, IllegalArgumentException {
+    assertOrThrow(!cmdLine.readsetId.isEmpty(), "Must specify a readset_id");
+    return genomics.readsets().get(cmdLine.readsetId);
   }
 
-  private static void getJob(CommandLine cmdLine, Genomics genomics) throws IllegalArgumentException {
-    // validate the command line
-    assertOrDie(!cmdLine.jobId.isEmpty(), "Must specify a job_id");
-
-    executeAndPrint(genomics.jobs().get(cmdLine.jobId));
+  static Genomics.Jobs.Get getJob(CommandLine cmdLine, Genomics genomics)
+      throws IOException, IllegalArgumentException {
+    assertOrThrow(!cmdLine.jobId.isEmpty(), "Must specify a job_id");
+    return genomics.jobs().get(cmdLine.jobId);
   }
 
-  private static void searchReads() throws IOException {
-    // Create request.
+  static Genomics.Reads.Search searchReads(CommandLine cmdLine, Genomics genomics)
+      throws IOException, IllegalArgumentException {
     SearchReadsRequest content = new SearchReadsRequest()
         .setReadsetIds(cmdLine.readsetIds)
         .setPageToken(cmdLine.pageToken);
 
     // Range parameters must all be specified or none.
     if (!cmdLine.sequenceName.isEmpty() || cmdLine.sequenceStart > 0 || cmdLine.sequenceEnd > 0) {
-      assertOrDie(!cmdLine.sequenceName.isEmpty(), "Must specify a sequence_name\n");
-      assertOrDie(cmdLine.sequenceStart > 0, "sequence_start must be greater than 0\n");
+      assertOrThrow(!cmdLine.sequenceName.isEmpty(), "Must specify a sequence_name");
+      assertOrThrow(cmdLine.sequenceStart > 0, "sequence_start must be greater than 0");
       // getting this far implies target_start is greater than 0
-      assertOrDie(cmdLine.sequenceEnd >= cmdLine.sequenceStart,
-          "sequence_end must be greater than sequence_start\n");
+      assertOrThrow(cmdLine.sequenceEnd >= cmdLine.sequenceStart,
+          "sequence_end must be greater than sequence_start");
 
       content
           .setSequenceName(cmdLine.sequenceName)
           .setSequenceStart(BigInteger.valueOf(cmdLine.sequenceStart.intValue()))
           .setSequenceEnd(BigInteger.valueOf(cmdLine.sequenceEnd.intValue()));
     }
-    executeAndPrint(genomics.reads().search(content));
+    return genomics.reads().search(content);
   }
 }
