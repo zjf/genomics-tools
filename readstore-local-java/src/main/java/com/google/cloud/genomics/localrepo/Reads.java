@@ -15,15 +15,8 @@ limitations under the License.
 */
 package com.google.cloud.genomics.localrepo;
 
-import com.google.cloud.genomics.localrepo.dto.Read;
 import com.google.cloud.genomics.localrepo.dto.SearchReadsRequest;
-import com.google.cloud.genomics.localrepo.dto.SearchReadsResponse;
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
 
-import java.util.Iterator;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -41,33 +34,6 @@ import javax.ws.rs.core.Response;
 @Singleton
 public class Reads extends BaseResource {
 
-  private static class Page<X> {
-
-    private static final int PAGE_SIZE = 256;
-
-    static <X> Page<X> nextPage(Iterable<X> stream, int page) {
-      Iterator<X> iterator = stream.iterator();
-      ImmutableList.Builder<X> objects = ImmutableList.builder();
-      for (int i = 0; iterator.hasNext() && i < PAGE_SIZE * (1 + page); ++i) {
-        X next = iterator.next();
-        if (PAGE_SIZE * page <= i) {
-          objects.add(next);
-        }
-      }
-      return new Page<>(
-          objects.build(),
-          iterator.hasNext() ? Optional.of(page + 1) : Optional.<Integer>absent());
-    }
-
-    final Optional<Integer> nextPage;
-    final List<X> objects;
-
-    private Page(List<X> objects, Optional<Integer> nextPage) {
-      this.objects = objects;
-      this.nextPage = nextPage;
-    }
-  }
-
   private final Backend backend;
 
   @Inject
@@ -81,24 +47,7 @@ public class Reads extends BaseResource {
     List<String> datasetIds = request.getDatasetIds();
     List<String> readsetIds = request.getReadsetIds();
     return datasetIds.isEmpty() || readsetIds.isEmpty()
-        ? Response
-            .ok(backend.searchReads(
-                datasetIds,
-                readsetIds,
-                request.getSequenceName(),
-                Optional.fromNullable(request.getSequenceStart()),
-                Optional.fromNullable(request.getSequenceEnd()),
-                new Function<FluentIterable<Read>, SearchReadsResponse>() {
-                  @Override public SearchReadsResponse apply(FluentIterable<Read> reads) {
-                    Page<Read> page = Page.nextPage(
-                        reads,
-                        Integer.parseInt(Optional.fromNullable(request.getPageToken()).or("0")));
-                    return SearchReadsResponse.create(
-                        page.objects,
-                        page.nextPage.isPresent() ? String.valueOf(page.nextPage.get()) : null);
-                  }
-                }))
-            .build()
+        ? Response.ok(backend.searchReads(request)).build()
         : BAD_REQUEST;
   }
 }

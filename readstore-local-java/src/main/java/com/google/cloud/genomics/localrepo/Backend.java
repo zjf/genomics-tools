@@ -16,27 +16,24 @@ limitations under the License.
 package com.google.cloud.genomics.localrepo;
 
 import com.google.cloud.genomics.localrepo.dto.Dataset;
-import com.google.cloud.genomics.localrepo.dto.Read;
 import com.google.cloud.genomics.localrepo.dto.Readset;
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
+import com.google.cloud.genomics.localrepo.dto.SearchReadsRequest;
+import com.google.cloud.genomics.localrepo.dto.SearchReadsResponse;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
 public class Backend {
 
-  public static Backend create(Collection<DatasetDirectory> datasets) {
+  public static Backend create(Collection<DatasetDirectory> datasets, int pageSize) {
     return new Backend(
         FluentIterable.from(datasets).uniqueIndex(DatasetDirectory.GET_DATASET_ID),
-        union(FluentIterable.from(datasets).transform(DatasetDirectory.GET_READSETS)));
+        union(FluentIterable.from(datasets).transform(DatasetDirectory.GET_READSETS)),
+        pageSize);
   }
 
   private static <X, Y> Map<X, Y> union(Iterable<Map<X, Y>> maps) {
@@ -47,35 +44,17 @@ public class Backend {
     return union.build();
   }
 
-  private static final Function<DatasetDirectory, Set<String>> GET_READSET_IDS =
-      new Function<DatasetDirectory, Set<String>>() {
-        @Override public Set<String> apply(DatasetDirectory dataset) {
-          return dataset.getReadsets().keySet();
-        }
-      };
-
-  private final Function<String, Set<String>> getReadsetIds;
   private final Map<String, DatasetDirectory> datasets;
   private final Map<String, BamFilesReadset> readsets;
-  private final Map<String, String> readsetIdsBySample;
+  private final QueryEngine queryEngine;
 
   private Backend(
       final Map<String, DatasetDirectory> datasets,
-      Map<String, BamFilesReadset> readsets) {
+      Map<String, BamFilesReadset> readsets,
+      int pageSize) {
     this.datasets = datasets;
     this.readsets = readsets;
-    this.getReadsetIds =
-        new Function<String, Set<String>>() {
-          @Override public Set<String> apply(String datasetId) {
-            return Optional.fromNullable(datasets.get(datasetId))
-                .transform(GET_READSET_IDS)
-                .or(Optional.of(Collections.<String>emptySet()))
-                .get();
-          }
-        };
-    this.readsetIdsBySample = Maps.transformValues(
-        FluentIterable.from(readsets.values()).uniqueIndex(BamFilesReadset.GET_SAMPLE),
-        BamFilesReadset.GET_READSET_ID);
+    this.queryEngine = QueryEngine.create(datasets, readsets, pageSize);
   }
 
   public Optional<Dataset> getDataset(String datasetId) {
@@ -90,31 +69,8 @@ public class Backend {
     return FluentIterable.from(datasets.values()).transform(DatasetDirectory.GET_DATASET);
   }
 
-  public <X> X searchReads(
-      Collection<String> datasetIds,
-      final Collection<String> readsetIds,
-      String sequenceName,
-      Optional<Long> start,
-      Optional<Long> end,
-      Function<FluentIterable<Read>, X> callback) {
-    Query.Builder builder = Query.builder(readsetIdsBySample, readsetIds, sequenceName);
-    if (start.isPresent()) {
-      builder.setStart(start.get().intValue());
-    }
-    if (end.isPresent()) {
-      builder.setEnd(end.get().intValue());
-    }
-    return builder.build(callback).search(FluentIterable
-        .from(datasetIds.isEmpty() ? datasets.keySet() : datasetIds)
-        .transformAndConcat(readsetIds.isEmpty()
-            ? getReadsetIds
-            : new Function<String, Collection<String>>() {
-                @Override public Collection<String> apply(String input) {
-                  return readsetIds;
-                }
-              })
-        .transform(Functions.forMap(readsets))
-        .transformAndConcat(BamFilesReadset.GET_BAM_FILES));
+  public SearchReadsResponse searchReads(SearchReadsRequest request) {
+    return queryEngine.searchReads(request);
   }
 
   public FluentIterable<Readset> searchReadsets(Collection<String> datasetIds) {

@@ -126,6 +126,13 @@ public class BamFile {
         }
       };
 
+  public static final Function<BamFile, File> GET_FILE =
+      new Function<BamFile, File>() {
+        @Override public File apply(BamFile bamFile) {
+          return bamFile.getFile();
+        }
+      };
+
   public static final Function<BamFile, Readset.FileData> GET_FILE_DATA =
       new Function<BamFile, Readset.FileData>() {
         @Override public Readset.FileData apply(BamFile bamFile) {
