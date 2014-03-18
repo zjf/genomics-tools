@@ -2,21 +2,41 @@ client-python
 ==============
 
 ###Getting started
+This python client provides a simple web application which fetches data from the
+<a href="https://developers.google.com/genomics">Google Genomics API</a>,
+the NCBI Genomics API or the Local Readstore through a web interface.
 
-This python client provides a simple app engine application which fetches data from the
-<a href="https://developers.google.com/genomics">Google Genomics API</a> through a web interface.
+It can be run with app engine or without.
 
-To run this code, you'll need to
+####Running on App Engine
+To run with app engine, you'll need to
 <a href="https://developers.google.com/appengine/docs/python/gettingstartedpython27/introduction">set up a
 Google App Engine environment</a>.
 
+Then, set `USE_APPENGINE=True` in the top of main.py.
+
+Run the app engine app locally and visit http://localhost:8080 to browse data from the API.
+
+####Running with paste and webapp2
+
+First you'll need to <a href="http://www.pip-installer.org/en/latest/installing.html">install pip</a>.
+
+Then install the required dependencies and run the localserver.py file:
+```
+pip install WebOb
+pip install Paste
+pip install webapp2
+pip install jinja2
+python localserver.py
+```
+
+####Enabling the Google API
+If you want to pull in data from Google's Genomics API you will need to set `REQUIRE_OAUTH = True` in main.py.
 You will also need to follow the <a href="https://developers.google.com/genomics#authenticate">authentication instructions</a>
 to generate a valid client_secrets.json file. However, for this application you want to generate secrets
 for a "Web application" rather than a "Native Application".
 
 Replace the client_secrets.json file in this directory with your new secrets file.
-
-Then, run this app engine app locally and visit http://localhost:8080 to browse data from the API.
 
 
 ###Code layout

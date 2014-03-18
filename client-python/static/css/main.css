@@ -47,6 +47,11 @@ limitations under the License.
   margin-right: .5em;
 }
 
+#sequences .sequence .title {
+  white-space: normal;
+  word-wrap: break-word;
+}
+
 #sequences .sequence .summary {
   color: #999;
 }
@@ -57,6 +62,14 @@ limitations under the License.
 
 #readDiv h4 {
   word-wrap: break-word;
+}
+
+#readsetPagination {
+  text-align: center;
+}
+
+#readsetPagination ul {
+  margin: 0;
 }
 
 .alert {

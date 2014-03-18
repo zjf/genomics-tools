@@ -15,6 +15,7 @@ output are all auto generated from these .proto files.
     The hope is that all important BAM information will be pulled into top level
     readset fields. Until this is done, each readset contains the exact header
     sections from the BAM file it was imported from.
+* **service.proto** defines the REST service used to expose these objects.  
 
 The format provided by these files is also documented in the
 <a href="https://www.googleapis.com/discovery/v1/apis/genomics/v1beta/rest">API definition file</a>.

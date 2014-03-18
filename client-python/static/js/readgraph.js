@@ -38,6 +38,7 @@ var readgraph = new function() {
 
   // Current state
   var readsetIds = [];
+  var readsetBackend = null;
   var sequences = null;
   var currentSequence = null;
   var xhrTimeout = null;
@@ -64,7 +65,7 @@ var readgraph = new function() {
 
   var moveTosequencePosition = function(position) {
     position = Math.max(0, position);
-    position = Math.min(currentSequence.sequenceLength, position);
+    position = Math.min(currentSequence['length'], position);
 
     var newX = x(position);
     newX = zoom.translate()[0] - newX + width / 2;
@@ -204,18 +205,22 @@ var readgraph = new function() {
     return parent.append('text').text(name).attr('x', x).attr('y', y);
   };
 
+  var sequenceId = function(name) {
+    return 'sequence-' + name.replace(/[\|\.]/g, '');
+  };
+
   var selectSequence = function(sequence) {
     currentSequence = sequence;
     $('.sequence').removeClass('active');
-    $('#sequence-' + sequence.name).addClass('active');
+    $('#' + sequenceId(sequence.name)).addClass('active');
     $('#graph').show();
     if (!setupRun) {
       setup();
     }
 
     // Axis and zoom
-    x.domain([0, sequence.sequenceLength]);
-    maxZoom = Math.ceil(Math.max(1, sequence.sequenceLength / minRange));
+    x.domain([0, sequence['length']]);
+    maxZoom = Math.ceil(Math.max(1, sequence['length'] / minRange));
     zoomLevelChange = Math.pow(maxZoom, 1/6);
     zoom.x(x).scaleExtent([1, maxZoom]).size([width, height]);
 
@@ -223,31 +228,43 @@ var readgraph = new function() {
     handleZoom();
 
     // Zoom into a given position because the overall zoom isn't supported
-    var initialPosition = currentSequence.sequenceLength / 2;
+    var initialPosition = currentSequence['length'] / 2;
     readgraph.jumpGraph(initialPosition.toString());
+  };
+
+  var makeImageUrl = function(name) {
+    return '/static/img/' + name + '.png';
   };
 
   var updateSequences = function() {
     var sequencesDiv = $("#sequences").empty();
 
     $.each(sequences, function(i, sequence) {
-      var canonicalName = sequence.name;
+      var title, imageUrl;
+
       if (sequence.name.indexOf('X') != -1) {
-        canonicalName = 'X';
+        title = 'Chromosome X';
+        imageUrl = makeImageUrl('chrX');
       } else if (sequence.name.indexOf('Y') != -1) {
-        canonicalName = 'Y';
+        title = 'Chromosome Y';
+        imageUrl = makeImageUrl('chrY');
       } else {
-        var number = canonicalName.replace(/\D/g,'');
-        canonicalName = number || canonicalName;
+        var number = sequence.name.replace(/\D/g,'');
+        if (!!number && number < 23) {
+          title = 'Chromosome ' + number;
+          imageUrl = makeImageUrl('chr' + number);
+        } else {
+          title = sequence.name;
+        }
       }
 
-      var imageUrl = '/static/img/chr' + canonicalName + '.png';
-      var title = "Chromosome " + canonicalName;
-      var summary = xFormat(sequence.sequenceLength) + " bases";
+      var summary = xFormat(sequence['length']) + " bases";
 
       var sequenceDiv = $('<div/>', {'class': 'sequence',
-        id: 'sequence-' + sequence.name}).appendTo(sequencesDiv);
-      $('<img>', {'class': 'pull-left', src: imageUrl}).appendTo(sequenceDiv);
+        id: sequenceId(sequence.name)}).appendTo(sequencesDiv);
+      if (imageUrl) {
+        $('<img>', {'class': 'pull-left', src: imageUrl}).appendTo(sequenceDiv);
+      }
       $('<div>', {'class': 'title'}).text(title).appendTo(sequenceDiv);
       $('<div>', {'class': 'summary'}).text(summary).appendTo(sequenceDiv);
 
@@ -257,7 +274,7 @@ var readgraph = new function() {
     });
   };
 
-  var updateDisplay = function() {
+  var updateDisplay = function(opt_skipReadQuery) {
     var scaleLevel = getScaleLevel();
     var summaryView = scaleLevel < 2;
     var coverageView = scaleLevel == 2 || scaleLevel == 3;
@@ -265,10 +282,11 @@ var readgraph = new function() {
     var baseView = scaleLevel > 5;
 
     var reads = readGroup.selectAll(".read");
+    var outlines = reads.selectAll(".outline");
     var letters = reads.selectAll(".letter");
 
     toggleVisibility(unsupportedMessage, summaryView || coverageView);
-    toggleVisibility(reads, readView);
+    toggleVisibility(outlines, readView);
     toggleVisibility(letters, baseView);
 
     var sequenceStart = parseInt(x.domain()[0]);
@@ -276,10 +294,11 @@ var readgraph = new function() {
 
     // TODO: Bring back coverage and summary views
     if (readView) {
-      queryReads(sequenceStart, sequenceEnd);
+      if (!opt_skipReadQuery) {
+        queryReads(sequenceStart, sequenceEnd);
+      }
+      outlines.attr("points", outlinePoints);
 
-      reads.selectAll('.outline')
-          .attr("points", outlinePoints);
     } else if (baseView) {
       letters.style('display', function(data, i) {
             if (data.rx < sequenceStart || data.rx >= sequenceEnd - 1) {
@@ -393,11 +412,22 @@ var readgraph = new function() {
 
   var setReads = function(reads) {
     var yTracks = [];
+    var readIds = {};
     $.each(reads, function(readi, read) {
       // Interpret the cigar
       // TODO: Compare the read against a reference as well
-      read.id = read.name + read.position + read.cigar;
+      if (!read.id) {
+        read.id = read.name + read.position + read.cigar;
+      }
+      if (readIds[read.id]) {
+        showError('There is more than one read with the ID ' + read.id +
+            ' - this will cause display problems');
+      }
+      readIds[read.id] = true;
+
+      read.name = read.name || read.id;
       read.readPieces = [];
+      read.index = readi;
       if (!read.cigar) {
         // Hack for unmapped reads
         read.length = 0;
@@ -437,6 +467,9 @@ var readgraph = new function() {
             break;
           case 'S': // TODO: Reveal this skipped data somewhere
             baseIndex += baseCount;
+            if (m == 0) {
+              read.position += baseCount;
+            }
             break;
           case 'I': // TODO: What should an insertion look like?
           case 'x': // TODO: Color these differently
@@ -456,7 +489,6 @@ var readgraph = new function() {
       read.end = read.position + read.length;
       // The 5th flag bit indicates this read is reversed
       read.reverse = (read.flags >> 4) % 2 == 1;
-      read.index = readi;
 
       for (var i = 0; i < yTracks.length; i++) {
         if (yTracks[i] < read.position) {
@@ -472,9 +504,9 @@ var readgraph = new function() {
 
     y.domain([yTracks.length, -1]);
 
+    readGroup.selectAll('.read').remove();
     if (reads.length == 0) {
       // Update the data behind the graph
-      readGroup.selectAll('.read').remove();
       return;
     }
 
@@ -483,6 +515,7 @@ var readgraph = new function() {
 
     reads.enter().append("g")
         .attr('class', 'read')
+        .attr('index', function(read, i) { return read.index; })
         .on("mouseover", showRead)
         .on("mouseout", hideRead);
 
@@ -491,21 +524,24 @@ var readgraph = new function() {
     outlines.enter().append('polygon')
         .attr('class', 'outline');
 
-    var letters = reads.selectAll(".letter")
-        .data(function(read, i) { return read.readPieces; });
+    var baseView = getScaleLevel() > 5;
+    if (baseView) {
+      var letters = reads.selectAll(".letter")
+          .data(function(read, i) { return read.readPieces; });
 
-    letters.enter().append('text')
-        .attr('class', 'letter')
-        .style('opacity', function(data, i) { return opacity(data.qual); })
-        .text(function(data, i) { return data.letter; });
-
+      letters.enter().append('text')
+          .attr('class', 'letter')
+          .style('opacity', function(data, i) { return opacity(data.qual); })
+          .text(function(data, i) { return data.letter; });
+    }
     reads.exit().remove();
-    updateDisplay();
+    updateDisplay(true);
   };
 
   var makeQueryParams = function(sequenceStart, sequenceEnd, type) {
     var queryParams = {};
     queryParams.readsetIds = readsetIds.join(',');
+    queryParams.backend = readsetBackend;
     queryParams.type = type;
     queryParams.sequenceName = currentSequence.name;
     queryParams.sequenceStart = parseInt(sequenceStart);
@@ -517,19 +553,9 @@ var readgraph = new function() {
     queryApi(sequenceStart, sequenceEnd, 'reads', setReads);
   };
 
-  var lastQueryParams = null;
   // TODO: Make this cleaner
   var queryApi = function(sequenceStart, sequenceEnd, type, handler) {
     var queryParams = makeQueryParams(sequenceStart, sequenceEnd, type);
-
-    if (lastQueryParams
-        && lastQueryParams.readsetIds == queryParams.readsetIds
-        && lastQueryParams.type == queryParams.type
-        && lastQueryParams.sequenceName == queryParams.sequenceName
-        && lastQueryParams.sequenceStart <= queryParams.sequenceStart
-        && lastQueryParams.sequenceEnd >= queryParams.sequenceEnd) {
-      return;
-    }
 
     if (xhrTimeout) {
       clearTimeout(xhrTimeout);
@@ -565,7 +591,8 @@ var readgraph = new function() {
   };
 
   // TODO: Support multiple readsets
-  this.addReadset = function(id, sequenceData) {
+  this.addReadset = function(backend, id, sequenceData) {
+    readsetBackend = backend;
     readsetIds = [id];
     if (readsetIds.length == 1) {
       sequences = sequenceData;

@@ -37,10 +37,12 @@ public final class Server {
 
   public static final class Builder {
 
+    private static final int DEFAULT_PAGE_SIZE = 256;
     private static final String DEFAULT_PATH = "";
     private static final int DEFAULT_PORT = 5000;
     private static final Collection<DatasetDirectory> DEFAULT_DATASETS = Collections.emptyList();
 
+    private int pageSize = DEFAULT_PAGE_SIZE;
     private String path = DEFAULT_PATH;
     private int port = DEFAULT_PORT;
     private Collection<DatasetDirectory> datasets = DEFAULT_DATASETS;
@@ -48,7 +50,7 @@ public final class Server {
     private Builder() {}
 
     public Server build() {
-      return new Server(port, path, datasets);
+      return new Server(port, path, datasets, pageSize);
     }
 
     @Override
@@ -57,14 +59,15 @@ public final class Server {
         Builder rhs = (Builder) obj;
         return Objects.equals(path, rhs.path)
             && port == rhs.port
-            && datasets.equals(rhs.datasets);
+            && datasets.equals(rhs.datasets)
+            && pageSize == rhs.pageSize;
       }
       return false;
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(port, path, datasets);
+      return Objects.hash(port, path, datasets, pageSize);
     }
 
     public Builder setDatasets(DatasetDirectory... datasets) {
@@ -73,6 +76,11 @@ public final class Server {
 
     public Builder setDatasets(Collection<DatasetDirectory> datasets) {
       this.datasets = datasets;
+      return this;
+    }
+
+    public Builder setPageSize(int pageSize) {
+      this.pageSize = pageSize;
       return this;
     }
 
@@ -120,7 +128,11 @@ public final class Server {
   private final HttpServer server;
   private final URI uri;
 
-  private Server(int port, String path, final Collection<DatasetDirectory> datasets) {
+  private Server(
+      int port,
+      String path,
+      final Collection<DatasetDirectory> datasets,
+      final int pageSize) {
     server = GrizzlyHttpServerFactory.createHttpServer(
         uri = URI.create(String.format("http://localhost:%d/%s", port, path)),
         new ResourceConfig()
@@ -130,7 +142,7 @@ public final class Server {
             .register(
                 new AbstractBinder() {
                   @Override protected void configure() {
-                    bind(Backend.create(datasets));
+                    bind(Backend.create(datasets, pageSize));
                   }
                 })
             .register(

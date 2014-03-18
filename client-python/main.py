@@ -18,6 +18,15 @@ This file serves two main purposes
 - and it provides a simple set of apis to the javascript
 """
 
+# If this is set to true, the client_secrets.json must be valid and users will
+# be required to grant OAuth access to this app before continuing.
+# This enables the Google API to work
+REQUIRE_OAUTH = False
+
+# If this is set to true, then this file will assume that app engine is
+# being used to run the server.
+USE_APPENGINE = False
+
 import httplib2
 import jinja2
 import json
@@ -26,17 +35,14 @@ import os
 import socket
 import webapp2
 
-from oauth2client import appengine
-from google.appengine.api import users
-from google.appengine.api import urlfetch
-from google.appengine.api import memcache
-from google.appengine.ext import db
 
+if USE_APPENGINE:
+  from oauth2client import appengine
+  from google.appengine.api import users
+  from google.appengine.api import memcache
 
-# Increase timeout to the maximum for all requests and use caching
-urlfetch.set_default_fetch_deadline(60)
 socket.setdefaulttimeout(60)
-http = httplib2.Http(cache=memcache)
+http = httplib2.Http(cache=memcache if USE_APPENGINE else None)
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -45,41 +51,37 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 
 client_secrets = os.path.join(os.path.dirname(__file__), 'client_secrets.json')
 
-decorator = appengine.oauth2decorator_from_clientsecrets(
-    client_secrets,
-    scope=[
-      'https://www.googleapis.com/auth/genomics',
-      'https://www.googleapis.com/auth/devstorage.read_write'
-    ])
+if USE_APPENGINE:
+  decorator = appengine.oauth2decorator_from_clientsecrets(
+      client_secrets,
+      scope=[
+        'https://www.googleapis.com/auth/genomics',
+        'https://www.googleapis.com/auth/devstorage.read_write'
+      ])
+else:
+  class FakeOauthDecorator():
+    def http(self):
+      return http
+    def oauth_aware(self, method):
+      return method
+    @property
+    def callback_path(self):
+      return '/unused'
+    def callback_handler(self):
+      pass
+  decorator = FakeOauthDecorator()
 
 SUPPORTED_BACKENDS = {
-  'GOOGLE' : {'name' : 'Google', 'url': 'https://www.googleapis.com/genomics/v1beta'},
-  'NCBI' : {'name' : 'NCBI', 'url': 'http://trace.ncbi.nlm.nih.gov'},
+  'NCBI' : {'name' : 'NCBI', 'url': 'http://trace.ncbi.nlm.nih.gov/Traces/gg'},
   'LOCAL' : {'name' : 'Local', 'url': 'http://localhost:5000'},
 }
+if REQUIRE_OAUTH:
+  # Google temporarily requires OAuth on all calls
+  SUPPORTED_BACKENDS['GOOGLE'] = {'name' : 'Google', 'url': 'https://www.googleapis.com/genomics/v1beta'}
+
 
 class ApiException(Exception):
   pass
-
-
-# Basic user settings
-class UserSettings(db.Model):
-  backend = db.StringProperty()
-
-def get_user_settings():
-  user = users.get_current_user()
-  u = UserSettings.get_by_key_name(key_names=user.email(),
-                                   read_policy=db.STRONG_CONSISTENCY)
-  if not u:
-    u = UserSettings(key_name=user.email())
-    u.backend = 'GOOGLE'
-    u.put()
-  return u
-
-def update_user_settings(backend):
-  u = get_user_settings()
-  u.backend = backend
-  u.put()
 
 
 # Request handlers
@@ -97,7 +99,10 @@ class BaseRequestHandler(webapp2.RequestHandler):
       self.response.set_status(500)
 
   def get_backend(self):
-    return get_user_settings().backend
+    backend = self.request.get('backend')
+    if not backend:
+      raise ApiException('Backend parameter must be set')
+    return backend
 
   def get_base_api_url(self):
     return SUPPORTED_BACKENDS[self.get_backend()]['url']
@@ -131,46 +136,20 @@ class ReadsetSearchHandler(BaseRequestHandler):
   @decorator.oauth_aware
   def get(self):
     readset_id = self.request.get('readsetId')
+    backend = self.get_backend()
     if not readset_id:
-      backend = self.get_backend()
+      # Temporary requirements to satisfy each backend
       if backend == 'GOOGLE':
-        # Temporary requirement
         body = {'datasetIds': ['376902546192']}
+      elif backend == 'NCBI':
+        body = {'datasetIds': ["SRP034507"]}
       else:
         body = {'datasetIds' : []}
       self.get_content("readsets/search?fields=readsets(id,name)", body=body)
       return
 
     # Single readset response
-    targets = [
-      {'name': "chr1", 'sequenceLength': 249250621},
-      {'name': "chr2", 'sequenceLength': 243199373},
-      {'name': "chr3", 'sequenceLength': 198022430},
-      {'name': "chr4", 'sequenceLength': 191154276},
-      {'name': "chr5", 'sequenceLength': 180915260},
-      {'name': "chr6", 'sequenceLength': 171115067},
-      {'name': "chr7", 'sequenceLength': 159138663},
-      {'name': "chr8", 'sequenceLength': 146364022},
-      {'name': "chr9", 'sequenceLength': 141213431},
-      {'name': "chr10", 'sequenceLength': 135534747},
-      {'name': "chr11", 'sequenceLength': 135006516},
-      {'name': "chr12", 'sequenceLength': 133851895},
-      {'name': "chr13", 'sequenceLength': 115169878},
-      {'name': "chr14", 'sequenceLength': 107349540},
-      {'name': "chr15", 'sequenceLength': 102531392},
-      {'name': "chr16", 'sequenceLength': 90354753},
-      {'name': "chr17", 'sequenceLength': 81195210},
-      {'name': "chr18", 'sequenceLength': 78077248},
-      {'name': "chr19", 'sequenceLength': 59128983},
-      {'name': "chr20", 'sequenceLength': 63025520},
-      {'name': "chr21", 'sequenceLength': 48129895},
-      {'name': "chr22", 'sequenceLength': 51304566},
-      {'name': "chrX", 'sequenceLength': 155270560},
-      {'name': "chrY", 'sequenceLength': 59373566},
-    ]
-    self.response.write("%s" % json.dumps(targets))
-    # TODO: Use the actual readset method
-    # self.get_content("readsets/%s" % readset_id, method='GET')
+    self.get_content("readsets/%s" % readset_id, method='GET')
 
 
 class ReadSearchHandler(BaseRequestHandler):
@@ -178,31 +157,27 @@ class ReadSearchHandler(BaseRequestHandler):
   @decorator.oauth_aware
   def get(self):
     body = {
-      'datasetIds': [],
       'readsetIds': self.request.get('readsetIds').split(','),
       'sequenceName': self.request.get('sequenceName'),
       'sequenceStart': max(0, int(self.request.get('sequenceStart'))),
       'sequenceEnd': int(self.request.get('sequenceEnd')),
-      'pageToken': self.request.get('pageToken'),
-     }
+    }
+    pageToken = self.request.get('pageToken')
+    if pageToken:
+      body['pageToken'] = pageToken
     self.get_content("reads/search", body=body)
 
-
-class SettingsHandler(webapp2.RequestHandler):
-  def post(self):
-    update_user_settings(self.request.get('backend'))
 
 class MainHandler(webapp2.RequestHandler):
 
   @decorator.oauth_aware
   def get(self):
-    if decorator.has_credentials():
+    if not REQUIRE_OAUTH or decorator.has_credentials():
       template = JINJA_ENVIRONMENT.get_template('main.html')
       self.response.write(template.render({
-        'username': users.User().nickname(),
-        'logout_url': users.create_logout_url('/'),
+        'username': users.User().nickname() if USE_APPENGINE else '',
+        'logout_url': users.create_logout_url('/') if USE_APPENGINE else '',
         'backends': SUPPORTED_BACKENDS,
-        'user_backend': get_user_settings().backend,
       }))
     else:
       # TODO: What kind of access do the non-google backends need?
@@ -211,10 +186,9 @@ class MainHandler(webapp2.RequestHandler):
         'url': decorator.authorize_url()
       }))
 
-app = webapp2.WSGIApplication(
+web_app = webapp2.WSGIApplication(
     [
      ('/', MainHandler),
-     ('/settings', SettingsHandler),
      ('/api/reads', ReadSearchHandler),
      ('/api/readsets', ReadsetSearchHandler),
      (decorator.callback_path, decorator.callback_handler()),
