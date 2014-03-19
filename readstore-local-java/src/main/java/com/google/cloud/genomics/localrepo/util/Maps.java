@@ -17,8 +17,14 @@ package com.google.cloud.genomics.localrepo.util;
 
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public final class Maps {
+
+  public static <X, Y> Map<X, Y> filterValues(Map<X, Y> unfiltered,
+      final Predicate<? super Y> valuePredicate) {
+    return com.google.common.collect.Maps.filterValues(unfiltered, valuePredicate::test);
+  }
 
   public static <X, Y, Z> Map<X, Z> transformValues(Map<X, Y> fromMap,
       Function<? super Y, Z> function) {

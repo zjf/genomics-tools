@@ -19,37 +19,40 @@ import com.google.cloud.genomics.localrepo.BamFile.IndexedBamFile;
 import com.google.cloud.genomics.localrepo.dto.Read;
 import com.google.cloud.genomics.localrepo.dto.SearchReadsRequest;
 import com.google.cloud.genomics.localrepo.dto.SearchReadsResponse;
-import com.google.common.base.Equivalence;
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.FluentIterable;
+import com.google.cloud.genomics.localrepo.util.Functions;
+import com.google.cloud.genomics.localrepo.util.Maps;
+import com.google.cloud.genomics.localrepo.util.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.PeekingIterator;
 
 import net.sf.samtools.SAMFileReader;
 import net.sf.samtools.SAMRecord;
-import net.sf.samtools.SAMRecord.SAMTagAndValue;
 import net.sf.samtools.SAMRecordComparator;
 import net.sf.samtools.SAMRecordCoordinateComparator;
 import net.sf.samtools.SAMRecordIterator;
 
 import java.io.File;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
+import java.util.Optional;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class QueryEngine {
 
@@ -71,35 +74,18 @@ public class QueryEngine {
     }
   }
 
-  private static final Function<FluentIterable<SAMRecord>, Iterable<SAMRecordWithSkip>> ADD_SKIPS =
-      new Function<FluentIterable<SAMRecord>, Iterable<SAMRecordWithSkip>>() {
-        @Override public Iterable<SAMRecordWithSkip> apply(FluentIterable<SAMRecord> stream) {
-          return stream.transform(
-              new Function<SAMRecord, SAMRecordWithSkip>() {
+  private static final Function<Stream<SAMRecord>, Stream<SAMRecordWithSkip>> ADD_SKIPS =
+      stream -> stream.map(
+          new Function<SAMRecord, SAMRecordWithSkip>() {
 
-                private int skip = 0;
+            private int skip = 0;
 
-                @Override public SAMRecordWithSkip apply(SAMRecord record) {
-                  return new SAMRecordWithSkip(record, skip++);
-                }
-              });
-        }
-      };
+            @Override public SAMRecordWithSkip apply(SAMRecord record) {
+              return new SAMRecordWithSkip(record, skip++);
+            }
+          });
 
   private static final Logger LOGGER = Logger.getLogger(QueryEngine.class.getName());
-
-  private static final Equivalence<SAMRecord> SAME_REFEREENCE_AND_START =
-      new Equivalence<SAMRecord>() {
-
-        @Override protected boolean doEquivalent(SAMRecord lhs, SAMRecord rhs) {
-          return Objects.equals(lhs.getReferenceIndex(), rhs.getReferenceIndex())
-              && Objects.equals(lhs.getAlignmentStart(), rhs.getAlignmentStart());
-        }
-
-        @Override protected int doHash(SAMRecord record) {
-          return Objects.hash(record.getReferenceIndex(), record.getAlignmentStart());
-        }
-      };
 
   public static QueryEngine create(
       final Map<String, DatasetDirectory> datasets,
@@ -109,12 +95,12 @@ public class QueryEngine {
   }
 
   private static int toInt(Long l) {
-    return Optional.fromNullable(l).transform(x -> x.intValue()).or(0);
+    return Optional.ofNullable(l).map(x -> x.intValue()).orElse(0);
   }
 
   private final Map<String, DatasetDirectory> datasets;
   private final Function<File, IndexedBamFile> getBamFile;
-  private final Function<String, Set<String>> getReadsetIds;
+  private final Function<String, Stream<String>> getReadsetIds;
   private final Map<String, BamFilesReadset> readsets;
   private final Map<String, String> readsetIdsBySample;
   private final int pageSize;
@@ -126,23 +112,24 @@ public class QueryEngine {
     this.datasets = datasets;
     this.readsets = readsets;
     this.getReadsetIds =
-        new Function<String, Set<String>>() {
-          @Override public Set<String> apply(String datasetId) {
-            return Optional.fromNullable(datasets.get(datasetId))
-                .transform(dataset -> dataset.getReadsets().keySet())
-                .or(Collections.<String>emptySet());
-          }
-        };
-    this.getBamFile = Functions.forMap(FluentIterable
-        .from(FluentIterable
-            .from(readsets.values())
-            .transformAndConcat(BamFilesReadset.GET_BAM_FILES)
-            .toSet())
-        .uniqueIndex(BamFile.GET_FILE));
-    this.readsetIdsBySample = Maps.transformValues(
-        FluentIterable.from(readsets.values()).uniqueIndex(BamFilesReadset.GET_SAMPLE),
-        BamFilesReadset.GET_READSET_ID);
+        datasetId -> Optional.ofNullable(datasets.get(datasetId))
+            .map(dataset -> dataset.getReadsets().keySet()).orElse(Collections.<String>emptySet())
+            .stream();
+    this.getBamFile =
+        Functions.forMap(readsets.values().stream().flatMap(flatMap(BamFilesReadset::getBamFiles))
+            .collect(Collectors.toSet()).stream()
+            .collect(Collectors.toMap(BamFile::getFile, Function.identity())));
+    this.readsetIdsBySample =
+        readsets.values().stream()
+            .collect(Collectors.toMap(BamFilesReadset::getSample, BamFilesReadset::getReadsetId));
     this.pageSize = pageSize;
+  }
+
+  private static <X, Y> Function<X, Stream<Y>> flatMap(
+      Function<? super X, ? extends Iterable<Y>> function) {
+    return x -> StreamSupport.stream(
+        Spliterators.spliteratorUnknownSize(function.apply(x).iterator(), Spliterator.IMMUTABLE),
+        false);
   }
 
   private QueryDescriptor createQueryDescriptor(SearchReadsRequest request) {
@@ -151,34 +138,24 @@ public class QueryEngine {
       List<String> datasetIds = request.getDatasetIds();
       final List<String> readsetIds = request.getReadsetIds();
       return QueryDescriptor.create(
-          ImmutableMap.copyOf(Maps.transformValues(
-              FluentIterable
-                  .from(getReadsets(datasetIds, readsetIds)
-                      .transformAndConcat(BamFilesReadset::getBamFiles)
-                      .transform(BamFile::getFile)
-                      .toSet())
-                  .uniqueIndex(Functions.<File>identity()),
-              Functions.constant(QueryDescriptor.Start.create(
-                  request.getSequenceName(),
-                  toInt(request.getSequenceStart()),
-                  0)))),
+          new HashMap<>(getReadsets(datasetIds, readsetIds)
+              .flatMap(flatMap(BamFilesReadset::getBamFiles))
+              .map(BamFile::getFile)
+              .collect(Collectors.toSet())
+              .stream()
+              .collect(
+                  Collectors.toMap(Function.identity(), Functions.constant(QueryDescriptor.Start
+                      .create(request.getSequenceName(), toInt(request.getSequenceStart()), 0))))),
           toInt(request.getSequenceEnd()));
     }
     return QueryDescriptor.fromPageToken(pageToken);
   }
 
-  private FluentIterable<BamFilesReadset> getReadsets(
+  private Stream<BamFilesReadset> getReadsets(
       List<String> datasetIds,
       final List<String> readsetIds) {
-    return FluentIterable
-        .from(datasetIds.isEmpty() ? datasets.keySet() : datasetIds)
-        .transformAndConcat(readsetIds.isEmpty() ? getReadsetIds :
-            new Function<String, Collection<String>>() {
-              @Override public Collection<String> apply(String input) {
-                return readsetIds;
-              }
-            })
-        .transform(Functions.forMap(readsets));
+    return (datasetIds.isEmpty() ? datasets.keySet() : datasetIds).stream()
+        .flatMap(readsetIds.isEmpty() ? getReadsetIds : input -> readsetIds.stream()).map(Functions.forMap(readsets));
   }
 
   private SearchReadsResponse searchReads(
@@ -190,7 +167,7 @@ public class QueryEngine {
         Iterators.mergeSorted(iterators.values(), Ordering.<SAMRecordWithSkip>natural()), pageSize);
         iterator.hasNext();) {
       SAMRecord record = iterator.next().record;
-      if (readsetFilter.apply(record)) {
+      if (readsetFilter.test(record)) {
         reads.add(read(record));
       }
     }
@@ -233,11 +210,12 @@ public class QueryEngine {
         toRead(record.getReadString()),
         null,
         toRead(record.getBaseQualityString()),
-        Maps.transformValues(
-            FluentIterable.from(record.getAttributes()).uniqueIndex(samTagAndValue -> samTagAndValue.tag),
-            Functions.compose(
-                Functions.toStringFunction(),
-                samTagAndValue -> samTagAndValue.value)));
+        record
+            .getAttributes()
+            .stream()
+            .collect(
+                Collectors.toMap(attribute -> attribute.tag,
+                    attribute -> attribute.value.toString())));
   }
 
   private static String toRead(String value) {
@@ -323,30 +301,27 @@ public class QueryEngine {
             return iterator;
           }
 
-          private <X> FluentIterable<FluentIterable<X>> partition(final Iterator<X> iterator,
-              final Equivalence<? super X> equivalence) {
-            return new FluentIterable<FluentIterable<X>>() {
-              @Override
-              public Iterator<FluentIterable<X>> iterator() {
-                return new AbstractIterator<FluentIterable<X>>() {
+          private <Y, X extends Y> Stream<Stream<X>> partition(final Iterator<X> iterator,
+              final BiPredicate<Y, Y> equivalence) {
+            return StreamSupport.stream(
+                new Spliterators.AbstractSpliterator<Stream<X>>(
+                    Long.MAX_VALUE, Spliterator.IMMUTABLE) {
 
                   private final PeekingIterator<X> delegate = Iterators.peekingIterator(iterator);
 
-                  @Override
-                  protected FluentIterable<X> computeNext() {
+                  @Override public boolean tryAdvance(Consumer<? super Stream<X>> action) {
                     if (delegate.hasNext()) {
+                      List<X> list = new ArrayList<>();
                       X first = delegate.next();
-                      ImmutableList.Builder<X> list = ImmutableList.<X>builder().add(first);
-                      for (Predicate<? super X> p = equivalence.equivalentTo(first);
-                          delegate.hasNext() && p.apply(delegate.peek());
-                          list.add(delegate.next()));
-                      return FluentIterable.from(list.build());
+                      for (list.add(first); delegate.hasNext()
+                          && equivalence.test(first, delegate.peek()); list.add(delegate.next()));
+                      action.accept(list.stream());
+                      return true;
                     }
-                    return endOfData();
+                    return false;
                   }
-                };
-              }
-            };
+                },
+                false);
           }
 
           @Override
@@ -357,9 +332,11 @@ public class QueryEngine {
                 ImmutableMap.builder();
             for (Map.Entry<Map.Entry<Map.Entry<File, QueryDescriptor.Start>, SAMFileReader>,
                 SAMRecordIterator> entry : map.entrySet()) {
-              iterators.put(entry.getKey().getKey().getKey(), Iterators.peekingIterator(
-                  partition(entry.getValue(), SAME_REFEREENCE_AND_START)
-                  .transformAndConcat(ADD_SKIPS).iterator()));
+              iterators.put(entry.getKey().getKey().getKey(), Iterators.peekingIterator(partition(
+                  entry.getValue(),
+                  (lhs, rhs) -> Objects.equals(lhs.getReferenceIndex(), rhs.getReferenceIndex())
+                      && Objects.equals(lhs.getAlignmentStart(), rhs.getAlignmentStart()))
+                  .map(ADD_SKIPS).flatMap(Function.identity()).iterator()));
             }
             return searchReads(iterators.build(), end, readsetFilter);
           }
@@ -369,10 +346,12 @@ public class QueryEngine {
   }
 
   public SearchReadsResponse searchReads(SearchReadsRequest request) {
-    return searchReads(createQueryDescriptor(request), Predicates.compose(
-        Predicates.in(getReadsets(request.getDatasetIds(),
-            request.getReadsetIds()).transform(BamFilesReadset.GET_READSET_ID)
-            .toSet()), Functions.compose(Functions.forMap(readsetIdsBySample),
-            record -> record.getReadGroup().getSample())));
+    return searchReads(
+        createQueryDescriptor(request),
+        Predicates.compose(
+            Predicates.in(getReadsets(request.getDatasetIds(), request.getReadsetIds()).map(
+                BamFilesReadset::getReadsetId).collect(Collectors.toSet())),
+            Functions.forMap(readsetIdsBySample).compose(
+                record -> record.getReadGroup().getSample())));
   }
 }
