@@ -16,17 +16,12 @@ limitations under the License.
 package com.google.cloud.genomics.localrepo;
 
 import com.google.cloud.genomics.localrepo.dto.Readset;
-import com.google.common.base.Function;
+import com.google.cloud.genomics.localrepo.util.Suppliers;
 import com.google.common.base.Optional;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import com.google.common.collect.FluentIterable;
 
 import net.sf.samtools.SAMFileHeader;
 import net.sf.samtools.SAMFileReader;
 import net.sf.samtools.SAMFileReader.ValidationStringency;
-import net.sf.samtools.SAMProgramRecord;
-import net.sf.samtools.SAMReadGroupRecord;
 import net.sf.samtools.SAMSequenceRecord;
 
 import java.io.File;
@@ -34,25 +29,25 @@ import java.text.DateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class BamFile {
 
   public static class IndexedBamFile extends BamFile {
 
-    public static final Function<BamFile, Optional<IndexedBamFile>> CREATE =
-        new Function<BamFile, Optional<IndexedBamFile>>() {
-          @Override public Optional<IndexedBamFile> apply(BamFile bamFile) {
-            File file = bamFile.getFile();
-            String path = file.getAbsolutePath();
-            File index = new File(String.format("%s.bai", path));
-            if (isReadableFile(index)) {
-              return Optional.of(new IndexedBamFile(file, index));
-            }
-            LOGGER.warning(String.format("BAM file \"%s\" has no index", path));
-            return Optional.<IndexedBamFile>absent();
-          }
-        };
+    public static Optional<IndexedBamFile> create(BamFile bamFile) {
+      File file = bamFile.getFile();
+      String path = file.getAbsolutePath();
+      File index = new File(String.format("%s.bai", path));
+      if (isReadableFile(index)) {
+        return Optional.of(new IndexedBamFile(file, index));
+      }
+      LOGGER.warning(String.format("BAM file \"%s\" has no index", path));
+      return Optional.<IndexedBamFile>absent();
+    }
 
     private final File index;
 
@@ -66,79 +61,13 @@ public class BamFile {
     }
   }
 
-  public static final Function<File, Optional<BamFile>> CREATE =
-      new Function<File, Optional<BamFile>>() {
-        @Override public Optional<BamFile> apply(File file) {
-          return isReadableFile(file) && file.getName().endsWith(".bam")
-              ? Optional.of(new BamFile(file))
-              : Optional.<BamFile>absent();
-        }
-      };
+  public static Optional<BamFile> create(File file) {
+    return isReadableFile(file) && file.getName().endsWith(".bam")
+        ? Optional.of(new BamFile(file))
+        : Optional.<BamFile>absent();
+  }
 
-  private static final Function<SAMProgramRecord, Readset.FileData.Program>
-      CREATE_PROGRAM =
-      new Function<SAMProgramRecord, Readset.FileData.Program>() {
-        @Override public Readset.FileData.Program apply(SAMProgramRecord record) {
-          return Readset.FileData.Program.create(
-              record.getId(),
-              record.getProgramName(),
-              record.getCommandLine(),
-              record.getPreviousProgramGroupId(),
-              record.getProgramVersion());
-        }
-      };
-
-  private static final Function<SAMReadGroupRecord, Readset.FileData.ReadGroup>
-      CREATE_READ_GROUP =
-      new Function<SAMReadGroupRecord, Readset.FileData.ReadGroup>() {
-
-        private final DateFormat runDateFormat = DateFormat.getDateInstance();
-
-        @Override public Readset.FileData.ReadGroup apply(SAMReadGroupRecord record) {
-          Date runDate = record.getRunDate();
-          return Readset.FileData.ReadGroup.create(
-              record.getId(),
-              record.getSequencingCenter(),
-              record.getDescription(),
-              null == runDate ? null : runDateFormat.format(runDate),
-              record.getFlowOrder(),
-              record.getKeySequence(),
-              record.getLibrary(),
-              record.getAttribute("PG"),
-              record.getPredictedMedianInsertSize(),
-              record.getPlatform(),
-              record.getPlatformUnit(),
-              record.getSample());
-        }
-      };
-
-  private static final Function<SAMSequenceRecord, Readset.FileData.RefSequence>
-      CREATE_REF_SEQUENCE =
-      new Function<SAMSequenceRecord, Readset.FileData.RefSequence>() {
-        @Override public Readset.FileData.RefSequence apply(SAMSequenceRecord record) {
-          return Readset.FileData.RefSequence.create(
-              record.getSequenceName(),
-              record.getSequenceLength(),
-              record.getAssembly(),
-              record.getAttribute(SAMSequenceRecord.MD5_TAG),
-              record.getSpecies(),
-              record.getAttribute(SAMSequenceRecord.URI_TAG));
-        }
-      };
-
-  public static final Function<BamFile, File> GET_FILE =
-      new Function<BamFile, File>() {
-        @Override public File apply(BamFile bamFile) {
-          return bamFile.getFile();
-        }
-      };
-
-  static final Function<BamFile, SAMFileHeader> GET_HEADER =
-      new Function<BamFile, SAMFileHeader>() {
-        @Override public SAMFileHeader apply(BamFile bamFile) {
-          return bamFile.getHeader();
-        }
-      };
+  private static final DateFormat DATE_FORMAT = DateFormat.getDateInstance();
 
   private static final Logger LOGGER = Logger.getLogger(BamFile.class.getName());
 
@@ -165,15 +94,33 @@ public class BamFile {
             Arrays.asList(Readset.FileData.Header.create(
                 fileHeader.getVersion(),
                 fileHeader.getSortOrder().toString())),
-            FluentIterable.from(fileHeader.getSequenceDictionary().getSequences())
-                .transform(CREATE_REF_SEQUENCE)
-                .toList(),
-            FluentIterable.from(fileHeader.getReadGroups())
-                .transform(CREATE_READ_GROUP)
-                .toList(),
-            FluentIterable.from(fileHeader.getProgramRecords())
-                .transform(CREATE_PROGRAM)
-                .toList(),
+            fileHeader.getSequenceDictionary().getSequences().stream()
+                .map(record -> Readset.FileData.RefSequence.create(
+                    record.getSequenceName(),
+                    record.getSequenceLength(),
+                    record.getAssembly(),
+                    record.getAttribute(SAMSequenceRecord.MD5_TAG),
+                    record.getSpecies(),
+                    record.getAttribute(SAMSequenceRecord.URI_TAG)))
+                .collect(Collectors.toList()),
+            fileHeader.getReadGroups().stream()
+                .map(record -> {
+                  Date runDate = record.getRunDate();
+                  return Readset.FileData.ReadGroup.create(record.getId(), record.getSequencingCenter(),
+                      record.getDescription(), null == runDate ? null : DATE_FORMAT.format(runDate),
+                      record.getFlowOrder(), record.getKeySequence(), record.getLibrary(),
+                      record.getAttribute("PG"), record.getPredictedMedianInsertSize(), record.getPlatform(),
+                      record.getPlatformUnit(), record.getSample());
+                })
+                .collect(Collectors.toList()),
+            fileHeader.getProgramRecords().stream()
+                .map(record -> Readset.FileData.Program.create(
+                    record.getId(),
+                    record.getProgramName(),
+                    record.getCommandLine(),
+                    record.getPreviousProgramGroupId(),
+                    record.getProgramVersion()))
+                .collect(Collectors.toList()),
             fileHeader.getComments());
         }
       },

@@ -69,10 +69,10 @@ public class DatasetDirectory {
   }
 
   private static final Function<File, Iterable<BamFile>> CREATE_BAM_FILE =
-      applyAsSet(BamFile.CREATE);
+      applyAsSet(BamFile::create);
 
   private static final Function<BamFile, Iterable<IndexedBamFile>> CREATE_INDEXED_BAM_FILE =
-      applyAsSet(IndexedBamFile.CREATE);
+      applyAsSet(IndexedBamFile::create);
 
   private static final Function<IndexedBamFile, Iterable<ReadGroupInfo>> CREATE_READ_GROUP_INFOS =
       new Function<IndexedBamFile, Iterable<ReadGroupInfo>>() {

@@ -15,9 +15,14 @@ limitations under the License.
 */
 package com.google.cloud.genomics.localrepo.util;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public final class Suppliers {
+
+  public static <F, T> Supplier<T> compose(Function<? super F, T> function, Supplier<F> supplier) {
+    return com.google.common.base.Suppliers.compose(function::apply, supplier::get)::get;
+  }
 
   public static <X> Supplier<X> memoize(final Supplier<X> supplier) {
     return com.google.common.base.Suppliers.memoize(supplier::get)::get;
