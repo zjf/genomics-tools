@@ -47,25 +47,30 @@ public class BamFilesReadset {
   private final String datasetId;
   private final String readsetId;
   private final String sample;
+  private final Supplier<Readset> readset;
+  private final Supplier<SAMFileHeader> header;
 
-  private final Supplier<Readset> readset = Suppliers.memoize(() -> Readset.create(
-      getReadsetId(), getSample(), getDatasetId(), DateTimeUtils.currentTimeMillis(), getBamFiles()
-      .stream().map(BamFile::getFileData).collect(Collectors.toCollection(() -> new ArrayList<>(
-      new TreeSet<>(Comparator.comparing(Readset.FileData::getFileUri)))))));
-
-  private final Supplier<SAMFileHeader> header = Suppliers.memoize(() -> new SamFileHeaderMerger(
-      SortOrder.coordinate, bamFiles.stream().map(BamFile::getHeader).collect(Collectors.toList()),
-      true).getMergedHeader());
-
-  private BamFilesReadset(
-      String readsetId,
-      String sample,
-      String datasetId,
+  private BamFilesReadset(String readsetId, String sample, String datasetId,
       Set<IndexedBamFile> bamFiles) {
     this.readsetId = readsetId;
     this.sample = sample;
     this.datasetId = datasetId;
     this.bamFiles = bamFiles;
+    this.readset =
+        Suppliers.memoize(() -> Readset.create(
+            getReadsetId(),
+            getSample(),
+            getDatasetId(),
+            DateTimeUtils.currentTimeMillis(),
+            getBamFiles()
+                .stream()
+                .map(BamFile::getFileData)
+                .collect(
+                    Collectors.toCollection(() -> new ArrayList<>(new TreeSet<>(Comparator
+                        .comparing(Readset.FileData::getFileUri)))))));
+    this.header =
+        Suppliers.memoize(() -> new SamFileHeaderMerger(SortOrder.coordinate, bamFiles.stream()
+            .map(BamFile::getHeader).collect(Collectors.toList()), true).getMergedHeader());
   }
 
   @Override public boolean equals(Object obj) {
