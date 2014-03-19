@@ -22,10 +22,14 @@ import javax.ws.rs.core.Response.Status;
 
 class BaseResource {
 
-  static final Response BAD_REQUEST = Response.status(Status.BAD_REQUEST).build();
-  static final Response NOT_FOUND = Response.status(Status.NOT_FOUND).build();
+  static final Response BAD_REQUEST = response(Status.BAD_REQUEST);
+  static final Response NOT_FOUND = response(Status.NOT_FOUND);
 
   static Response toResponse(Optional<?> optional) {
     return optional.isPresent() ? Response.ok(optional.get()).build() : NOT_FOUND;
+  }
+
+  private static Response response(Response.Status status) {
+    return Response.status(status).build();
   }
 }

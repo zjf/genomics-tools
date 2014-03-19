@@ -13,6 +13,16 @@
  */
 package com.google.cloud.genomics.localrepo;
 
+import com.google.cloud.genomics.localrepo.util.Suppliers;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.Parser;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,16 +32,6 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.Parser;
-
-import com.google.cloud.genomics.localrepo.util.Suppliers;
-import com.google.common.collect.ImmutableList;
 
 public class CommandLineArguments {
 
@@ -99,7 +99,7 @@ public class CommandLineArguments {
     }
 
     final Object getValue(CommandLine commandLine) {
-      ImmutableList.Builder<MatchResult> results = ImmutableList.builder();
+      List<MatchResult> results = new ArrayList<>();
       if (commandLine.hasOption(opt)) {
         for (String value : commandLine.getOptionValues(opt)) {
           Matcher matcher = pattern.matcher(value);
@@ -113,7 +113,7 @@ public class CommandLineArguments {
           results.add(matcher);
         }
       }
-      return getValue.apply(results.build());
+      return getValue.apply(results);
     }
   }
 
