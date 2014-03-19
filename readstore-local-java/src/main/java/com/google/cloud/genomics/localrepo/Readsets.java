@@ -18,6 +18,8 @@ package com.google.cloud.genomics.localrepo;
 import com.google.cloud.genomics.localrepo.dto.SearchReadsetsRequest;
 import com.google.cloud.genomics.localrepo.dto.SearchReadsetsResponse;
 
+import java.util.stream.Collectors;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
@@ -52,7 +54,7 @@ public class Readsets extends BaseResource {
   @Path("/search")
   public SearchReadsetsResponse search(SearchReadsetsRequest request) {
     return SearchReadsetsResponse.create(
-        backend.searchReadsets(request.getDatasetIds()).toList(),
+        backend.searchReadsets(request.getDatasetIds()).collect(Collectors.toList()),
         null);
   }
 }

@@ -19,28 +19,33 @@ import com.google.cloud.genomics.localrepo.dto.Dataset;
 import com.google.cloud.genomics.localrepo.dto.Readset;
 import com.google.cloud.genomics.localrepo.dto.SearchReadsRequest;
 import com.google.cloud.genomics.localrepo.dto.SearchReadsResponse;
-import com.google.common.base.Optional;
-import com.google.common.base.Predicates;
-import com.google.common.collect.FluentIterable;
+import com.google.cloud.genomics.localrepo.util.Predicates;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Backend {
 
-  public static Backend create(Collection<DatasetDirectory> datasets, int pageSize) {
-    return new Backend(
-        FluentIterable.from(datasets).uniqueIndex(DatasetDirectory.GET_DATASET_ID),
-        union(FluentIterable.from(datasets).transform(DatasetDirectory.GET_READSETS)),
-        pageSize);
+  public static Backend create(Collection<DatasetDirectory> datasets,
+      int pageSize) {
+    return new Backend(datasets.stream().collect(
+        Collectors.toMap(((Function<Dataset, String>) Dataset::getId)
+            .compose(DatasetDirectory::getDataset), Function.identity())),
+        union(datasets.stream().map(DatasetDirectory::getReadsets)), pageSize);
   }
 
-  private static <X, Y> Map<X, Y> union(Iterable<Map<X, Y>> maps) {
+  private static <X, Y> Map<X, Y> union(Stream<Map<X, Y>> maps) {
     ImmutableMap.Builder<X, Y> union = ImmutableMap.builder();
-    for (Map<X, Y> map : maps) {
-      union.putAll(map);
-    }
+    for (
+        Iterator<Map<X, Y>> iterator = maps.iterator();
+        iterator.hasNext();
+        union.putAll(iterator.next()));
     return union.build();
   }
 
@@ -58,26 +63,29 @@ public class Backend {
   }
 
   public Optional<Dataset> getDataset(String datasetId) {
-    return Optional.fromNullable(datasets.get(datasetId)).transform(DatasetDirectory.GET_DATASET);
+    return Optional.ofNullable(datasets.get(datasetId)).map(DatasetDirectory::getDataset);
   }
 
   public Optional<Readset> getReadset(String readsetId) {
-    return Optional.fromNullable(readsets.get(readsetId)).transform(BamFilesReadset.GET_READSET);
+    return Optional.ofNullable(readsets.get(readsetId)).map(BamFilesReadset::getReadset);
   }
 
-  public FluentIterable<Dataset> listDatasets() {
-    return FluentIterable.from(datasets.values()).transform(DatasetDirectory.GET_DATASET);
+  public Stream<Dataset> listDatasets() {
+    return datasets.values().stream().map(DatasetDirectory::getDataset);
   }
 
   public SearchReadsResponse searchReads(SearchReadsRequest request) {
     return queryEngine.searchReads(request);
   }
 
-  public FluentIterable<Readset> searchReadsets(Collection<String> datasetIds) {
-    return FluentIterable.from(readsets.values())
+  public Stream<Readset> searchReadsets(Collection<String> datasetIds) {
+    return readsets.values()
+        .stream()
         .filter(datasetIds.isEmpty()
-            ? Predicates.<BamFilesReadset>alwaysTrue()
-            : Predicates.compose(Predicates.in(datasetIds), BamFilesReadset.GET_DATASET_ID))
-        .transform(BamFilesReadset.GET_READSET);
+            ? (readset) -> true
+            : Predicates.compose(
+                datasetId -> datasetIds.contains(datasetId),
+                BamFilesReadset::getDatasetId))
+        .map(BamFilesReadset::getReadset);
   }
 }

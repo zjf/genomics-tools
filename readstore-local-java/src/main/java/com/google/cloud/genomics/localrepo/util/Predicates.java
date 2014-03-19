@@ -13,19 +13,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package com.google.cloud.genomics.localrepo;
+package com.google.cloud.genomics.localrepo.util;
 
-import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
+public final class Predicates {
 
-class BaseResource {
-
-  static final Response BAD_REQUEST = Response.status(Status.BAD_REQUEST).build();
-  static final Response NOT_FOUND = Response.status(Status.NOT_FOUND).build();
-
-  static Response toResponse(Optional<?> optional) {
-    return optional.isPresent() ? Response.ok(optional.get()).build() : NOT_FOUND;
+  public static <X, Y> Predicate<X> compose(
+      Predicate<Y> predicate,
+      Function<? super X, Y> function) {
+    return x -> predicate.test(function.apply(x));
   }
+
+  private Predicates() {}
 }

@@ -17,6 +17,8 @@ package com.google.cloud.genomics.localrepo;
 
 import com.google.cloud.genomics.localrepo.dto.ListDatasetsResponse;
 
+import java.util.stream.Collectors;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.Consumes;
@@ -52,6 +54,6 @@ public class Datasets extends BaseResource {
   public ListDatasetsResponse list(
       @QueryParam("projectId") long projectId,
       @DefaultValue("") @QueryParam("pageToken") String pageToken) {
-    return ListDatasetsResponse.create(backend.listDatasets().toList(), null);
+    return ListDatasetsResponse.create(backend.listDatasets().collect(Collectors.toList()), null);
   }
 }
