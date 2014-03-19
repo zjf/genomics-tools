@@ -76,7 +76,7 @@ public final class QueryDescriptor implements Serializable {
 
     @Override
     public String toString() {
-      return String.format("(%s, %d, %d, %d)", getSequence(), getStart(), getSkip());
+      return String.format("(%s, %d, %d)", getSequence(), getStart(), getSkip());
     }
   }
 
