@@ -15,23 +15,20 @@ limitations under the License.
 */
 package com.google.cloud.genomics.localrepo;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.collect.FluentIterable;
+import java.io.IOException;
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.codehaus.jackson.jaxrs.JacksonJaxbJsonProvider;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
-
-import java.io.IOException;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
 
 public final class Server {
 
@@ -100,13 +97,6 @@ public final class Server {
     }
   }
 
-  private static final Function<Map.Entry<String, String>, DatasetDirectory> CREATE_DATASET =
-      new Function<Map.Entry<String, String>, DatasetDirectory>() {
-        @Override public DatasetDirectory apply(Map.Entry<String, String> entry) {
-          return DatasetDirectory.create(entry.getKey(), entry.getValue());
-        }
-      };
-
   public static Builder builder() {
     return new Builder();
   }
@@ -116,12 +106,13 @@ public final class Server {
     Optional<Integer> port = cmdLine.getPort();
     builder()
         .setPort(port.isPresent() ? port.get() : Builder.DEFAULT_PORT)
-        .setDatasets(
-            FluentIterable.from(cmdLine.getDatasets().entrySet())
-                .transform(CREATE_DATASET)
-                .toList())
-        .build()
-        .start();
+        .setDatasets(cmdLine
+            .getDatasets()
+            .entrySet()
+            .stream()
+            .map(entry -> DatasetDirectory.create(entry.getKey(), entry.getValue()))
+            .collect(Collectors.toList()))
+        .build().start();
     Thread.currentThread().join();
   }
 

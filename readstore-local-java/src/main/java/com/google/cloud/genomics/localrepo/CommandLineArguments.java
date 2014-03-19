@@ -13,14 +13,15 @@
  */
 package com.google.cloud.genomics.localrepo;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
@@ -29,11 +30,8 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Parser;
 
-import java.util.List;
-import java.util.Map;
-import java.util.regex.MatchResult;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.google.cloud.genomics.localrepo.util.Suppliers;
+import com.google.common.collect.ImmutableList;
 
 public class CommandLineArguments {
 
@@ -43,53 +41,35 @@ public class CommandLineArguments {
         'd',
         "dataset",
         "A dataset in <id>:<directory> form",
-        "^([\\p{Alpha}$_][\\p{Alnum}$_]*):(.+)$") {
-      @Override Object getValue(List<MatchResult> results) {
-        return Maps.transformValues(FluentIterable.from(results).uniqueIndex(GROUP_1), GROUP_2);
-      }
-    },
+        "^([\\p{Alpha}$_][\\p{Alnum}$_]*):(.+)$",
+        results -> results.stream()
+            .collect(Collectors.toMap(result -> result.group(1), result -> result.group(2)))),
 
     PORT(
         'p',
         "port",
         "The port to run the server on",
-        "^(\\p{Digit}+)$") {
-      @Override Object getValue(List<MatchResult> results) {
-        switch (results.size()) {
-          case 0:
-            return Optional.<Integer>absent();
-          case 1:
-            return Optional.of(Integer.parseInt(GROUP_1.apply(Iterables.getOnlyElement(results))));
-          default:
-            throw new IllegalArgumentException("Flag 'port' can only appear once");
-        }
-      }
-    };
-
-    private static final Function<MatchResult, String> GROUP_1 = groupFunction(1);
-    private static final Function<MatchResult, String> GROUP_2 = groupFunction(2);
-
-    private static final Supplier<Options> OPTIONS = Suppliers.memoize(
-        new Supplier<Options>() {
-          @Override public Options get() {
-            Options options = new Options();
-            for (Flag flag : values()) {
-              options.addOption(flag.option);
-            }
-            return options;
+        "^(\\p{Digit}+)$",
+        results -> {
+          switch (results.size()) {
+            case 0:
+              return Optional.empty();
+            case 1:
+              return Optional.of(Integer.parseInt(results.get(0).group(1)));
+            default:
+              throw new IllegalArgumentException("Flag 'port' can only appear once");
           }
         });
 
-    private static final Parser PARSER = new GnuParser();
+    private static final Supplier<Options> OPTIONS = Suppliers.memoize(() -> {
+      Options options = new Options();
+      for (Flag flag : values()) {
+        options.addOption(flag.option);
+      }
+      return options;
+    });
 
-    private static Function<MatchResult, String> groupFunction(final int group) {
-      return
-          new Function<MatchResult, String>() {
-            @Override public String apply(MatchResult result) {
-              return result.group(group);
-            }
-          };
-    }
+    private static final Parser PARSER = new GnuParser();
 
     static CommandLine parse(String[] args) {
       try {
@@ -104,11 +84,18 @@ public class CommandLineArguments {
     private final Option option;
     private final Pattern pattern;
     private final String regex;
+    private final Function<List<MatchResult>, Object> getValue;
 
-    private Flag(char opt, String longOpt, String description, String regex) {
-      option =
+    private Flag(
+        char opt,
+        String longOpt,
+        String description,
+        String regex,
+        Function<List<MatchResult>, Object> getValue) {
+      this.option =
           new Option(Character.toString(this.opt = opt), this.longOpt = longOpt, true, description);
-      pattern = Pattern.compile(this.regex = regex);
+      this.pattern = Pattern.compile(this.regex = regex);
+      this.getValue = getValue;
     }
 
     final Object getValue(CommandLine commandLine) {
@@ -117,16 +104,17 @@ public class CommandLineArguments {
         for (String value : commandLine.getOptionValues(opt)) {
           Matcher matcher = pattern.matcher(value);
           if (!matcher.matches()) {
-            throw new IllegalArgumentException(
-                String.format("Flag '%s': \"%s\" doesn't match regex \"%s\"", longOpt, value, regex));
+            throw new IllegalArgumentException(String.format(
+                "Flag '%s': \"%s\" doesn't match regex \"%s\"",
+                longOpt,
+                value,
+                regex));
           }
           results.add(matcher);
         }
       }
-      return getValue(results.build());
+      return getValue.apply(results.build());
     }
-
-    abstract Object getValue(List<MatchResult> results);
   }
 
   @SuppressWarnings("unchecked")
