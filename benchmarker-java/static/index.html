@@ -17,12 +17,58 @@ limitations under the License.
 <html lang="en">
 <head>
   <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" charset="utf-8"></script>
 </head>
 <body>
   <div class="container" style="margin-top: 40px">
-    <div class="jumbotron">
-      <h2>Work in progress!</h2>
-    </div>
+
+    <form class="form">
+      <div class="form-group">
+        <label>Data provider</label>
+        <input type="text" list="backends" id="provider" value="http://" class="form-control"/>
+        <datalist id="backends">
+          <option value="http://www.googleapis.com/genomics/v1beta/">Google</option>
+          <option value="http://trace.ncbi.nlm.nih.gov/Traces/gg/">NCBI</option>
+          <option value="http://localhost:5000/">Local server</option>
+        </datalist>
+      </div>
+      <div class="form-group">
+        <label>Endpoint</label>
+        <input type="text" list="endpoints" id="endpoint" value="readsets/search" class="form-control"/>
+        <datalist id="endpoints">
+          <option value="readsets/search">Search readsets</option>
+          <option value="reads/search">Search reads</option>
+        </datalist>
+      </div>
+      <div class="form-group">
+        <label>Method</label>
+        <input type="text" list="methods" id="method" value="POST" class="form-control"/>
+        <datalist id="methods">
+          <option value="POST"></option>
+          <option value="GET"></option>
+        </datalist>
+      </div>
+      <div class="form-group">
+        <label>Body</label>
+        <textarea id="body" class="form-control">{}</textarea>
+      </div>
+      <button type="button" class="btn btn-primary" onclick="return getData(this)">Get data</button>
+    </form>
+
+    <table id="results"></table>
   </div>
+
+  <script>
+    function getData(button) {
+      var url = $('#backend').val() + $('#endpoint').val();
+      $.post('/getdata', {
+        url: url,
+        method: $('#method').val(),
+        body: $('#body').val()
+      }).done(function(res) {
+        $("#results").html(res);
+      });
+    }
+  </script>
 </body>
 </html>
