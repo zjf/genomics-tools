@@ -43,12 +43,8 @@ import java.util.Map;
 import javax.ws.rs.client.Entity;
 
 @RunWith(JUnit4.class)
-public class ServerTest {
+public class ServerTest extends BaseTest {
 
-  private static final String
-      DATASET_ID = "datasetId";
-  private static final DatasetDirectory
-      DATASET_DIR = DatasetDirectory.create(DATASET_ID, "testdata");
   private static final Dataset
       DATASET = DATASET_DIR.getDataset();
   private static final String
