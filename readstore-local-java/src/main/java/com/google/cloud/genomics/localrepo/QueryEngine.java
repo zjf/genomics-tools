@@ -86,28 +86,7 @@ public class QueryEngine {
         }
       };
 
-  private static final Function<DatasetDirectory, Set<String>> GET_READSET_IDS =
-      new Function<DatasetDirectory, Set<String>>() {
-        @Override public Set<String> apply(DatasetDirectory dataset) {
-          return dataset.getReadsets().keySet();
-        }
-      };
-
-  private static final Function<SAMRecord, String> GET_SAMPLE =
-      new Function<SAMRecord, String>() {
-        @Override public String apply(SAMRecord record) {
-          return record.getReadGroup().getSample();
-        }
-      };
-
   private static final Logger LOGGER = Logger.getLogger(QueryEngine.class.getName());
-
-  private static final Function<Long, Integer> LONG_TO_INT =
-      new Function<Long, Integer>() {
-        @Override public Integer apply(Long l) {
-          return l.intValue();
-        }
-      };
 
   private static final Equivalence<SAMRecord> SAME_REFEREENCE_AND_START =
       new Equivalence<SAMRecord>() {
@@ -130,7 +109,7 @@ public class QueryEngine {
   }
 
   private static int toInt(Long l) {
-    return Optional.fromNullable(l).transform(LONG_TO_INT).or(0);
+    return Optional.fromNullable(l).transform(x -> x.intValue()).or(0);
   }
 
   private final Map<String, DatasetDirectory> datasets;
@@ -150,7 +129,7 @@ public class QueryEngine {
         new Function<String, Set<String>>() {
           @Override public Set<String> apply(String datasetId) {
             return Optional.fromNullable(datasets.get(datasetId))
-                .transform(GET_READSET_IDS)
+                .transform(dataset -> dataset.getReadsets().keySet())
                 .or(Collections.<String>emptySet());
           }
         };
@@ -175,8 +154,8 @@ public class QueryEngine {
           ImmutableMap.copyOf(Maps.transformValues(
               FluentIterable
                   .from(getReadsets(datasetIds, readsetIds)
-                      .transformAndConcat(BamFilesReadset.GET_BAM_FILES)
-                      .transform(BamFile.GET_FILE)
+                      .transformAndConcat(BamFilesReadset::getBamFiles)
+                      .transform(BamFile::getFile)
                       .toSet())
                   .uniqueIndex(Functions.<File>identity()),
               Functions.constant(QueryDescriptor.Start.create(
@@ -202,13 +181,6 @@ public class QueryEngine {
         .transform(Functions.forMap(readsets));
   }
 
-  private static final Predicate<Iterator<?>> ITERATOR_HAS_NEXT =
-      new Predicate<Iterator<?>>() {
-        @Override public boolean apply(Iterator<?> iterator) {
-          return iterator.hasNext();
-        }
-      };
-
   private SearchReadsResponse searchReads(
       Map<File, PeekingIterator<SAMRecordWithSkip>> iterators,
       final int end,
@@ -223,7 +195,7 @@ public class QueryEngine {
       }
     }
     Map<File, PeekingIterator<SAMRecordWithSkip>> nonEmptyIterators =
-        Maps.filterValues(iterators, ITERATOR_HAS_NEXT);
+        Maps.filterValues(iterators, iterator -> iterator.hasNext());
     return SearchReadsResponse.create(
         reads.build(),
         nonEmptyIterators.isEmpty()
@@ -245,21 +217,6 @@ public class QueryEngine {
                 .toPageToken());
   }
 
-  private static final Function<SAMTagAndValue, String> GET_TAG =
-      new Function<SAMTagAndValue, String>() {
-        @Override public String apply(SAMTagAndValue samTagAndValue) {
-          return samTagAndValue.tag;
-        }
-      };
-
-  private static final Function<SAMTagAndValue, String> GET_VALUE = Functions.compose(
-      Functions.toStringFunction(),
-      new Function<SAMTagAndValue, Object>() {
-        @Override public Object apply(SAMTagAndValue samTagAndValue) {
-          return samTagAndValue.value;
-        }
-      });
-
   private Read read(SAMRecord record) {
     return Read.create(
         toRead(record.getReadName()),
@@ -277,8 +234,10 @@ public class QueryEngine {
         null,
         toRead(record.getBaseQualityString()),
         Maps.transformValues(
-            FluentIterable.from(record.getAttributes()).uniqueIndex(GET_TAG),
-            GET_VALUE));
+            FluentIterable.from(record.getAttributes()).uniqueIndex(samTagAndValue -> samTagAndValue.tag),
+            Functions.compose(
+                Functions.toStringFunction(),
+                samTagAndValue -> samTagAndValue.value)));
   }
 
   private static String toRead(String value) {
@@ -410,9 +369,10 @@ public class QueryEngine {
   }
 
   public SearchReadsResponse searchReads(SearchReadsRequest request) {
-    return searchReads(createQueryDescriptor(request), Predicates.compose(Predicates.in(
-        getReadsets(request.getDatasetIds(), request.getReadsetIds())
-        .transform(BamFilesReadset.GET_READSET_ID).toSet()),
-        Functions.compose(Functions.forMap(readsetIdsBySample), GET_SAMPLE)));
+    return searchReads(createQueryDescriptor(request), Predicates.compose(
+        Predicates.in(getReadsets(request.getDatasetIds(),
+            request.getReadsetIds()).transform(BamFilesReadset.GET_READSET_ID)
+            .toSet()), Functions.compose(Functions.forMap(readsetIdsBySample),
+            record -> record.getReadGroup().getSample())));
   }
 }

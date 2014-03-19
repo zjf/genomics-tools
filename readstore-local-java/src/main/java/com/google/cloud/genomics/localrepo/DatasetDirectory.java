@@ -15,11 +15,25 @@ limitations under the License.
 */
 package com.google.cloud.genomics.localrepo;
 
+import java.io.File;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+
 import com.google.cloud.genomics.localrepo.BamFile.IndexedBamFile;
 import com.google.cloud.genomics.localrepo.dto.Dataset;
 import com.google.cloud.genomics.localrepo.dto.Readset;
 import com.google.common.base.Function;
-import com.google.common.base.Functions;
 import com.google.common.base.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -29,38 +43,9 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 
-import java.io.File;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-
 public class DatasetDirectory {
 
   private static class ReadGroupInfo {
-
-    static final Function<ReadGroupInfo, IndexedBamFile> GET_BAM_FILE =
-        new Function<ReadGroupInfo, IndexedBamFile>() {
-          @Override public IndexedBamFile apply(ReadGroupInfo info) {
-            return info.getBamFile();
-          }
-        };
-
-    static final Function<ReadGroupInfo, String> GET_SAMPLE =
-        new Function<ReadGroupInfo, String>() {
-          @Override public String apply(ReadGroupInfo info) {
-            return info.getSample();
-          }
-        };
 
     static ReadGroupInfo create(IndexedBamFile bamFile, String sample) {
       return new ReadGroupInfo(bamFile, sample);
@@ -115,43 +100,7 @@ public class DatasetDirectory {
         }
       });
 
-  private static final Function<Collection<ReadGroupInfo>, Set<IndexedBamFile>> GET_BAM_FILES =
-      new Function<Collection<ReadGroupInfo>, Set<IndexedBamFile>>() {
-        @Override public Set<IndexedBamFile> apply(Collection<ReadGroupInfo> infos) {
-          return FluentIterable.from(infos).transform(ReadGroupInfo.GET_BAM_FILE).toSet();
-        }
-      };
-
-  public static final Function<DatasetDirectory, Dataset> GET_DATASET =
-      new Function<DatasetDirectory, Dataset>() {
-        @Override public Dataset apply(DatasetDirectory dataset) {
-          return dataset.getDataset();
-        }
-      };
-
-  public static final Function<DatasetDirectory, String> GET_DATASET_ID = Functions.compose(
-      new Function<Dataset, String>() {
-        @Override public String apply(Dataset dataset) {
-          return dataset.getId();
-        }
-      },
-      GET_DATASET);
-
-  public static final Function<DatasetDirectory, Map<String, BamFilesReadset>> GET_READSETS =
-      new Function<DatasetDirectory, Map<String, BamFilesReadset>>() {
-        @Override public Map<String, BamFilesReadset> apply(DatasetDirectory dataset) {
-          return dataset.getReadsets();
-        }
-      };
-
   private static final FileSystem FILE_SYSTEM = FileSystems.getDefault();
-
-  private static final Function<Path, File> PATH_TO_FILE =
-      new Function<Path, File>() {
-        @Override public File apply(Path path) {
-          return path.toFile();
-        }
-      };
 
   private static final Supplier<String> READSET_ID_GENERATOR =
       new Supplier<String>() {
@@ -164,13 +113,8 @@ public class DatasetDirectory {
       };
 
   private static <X, Y> Function<X, Iterable<Y>> applyAsSet(
-      final Function<X, Optional<Y>> function) {
-    return
-        new Function<X, Iterable<Y>>() {
-          @Override public Iterable<Y> apply(X input) {
-            return function.apply(input).asSet();
-          }
-        };
+      Function<X, Optional<Y>> function) {
+    return input -> function.apply(input).asSet();
   }
 
   public static DatasetDirectory create(String datasetId, String directory) {
@@ -241,13 +185,13 @@ public class DatasetDirectory {
                       Maps.transformValues(
                           FluentIterable.from(Collections.singletonList(getDirectory()))
                               .transformAndConcat(FIND_FILES)
-                              .transform(PATH_TO_FILE)
+                              .transform(path -> path.toFile())
                               .transformAndConcat(CREATE_BAM_FILE)
                               .transformAndConcat(CREATE_INDEXED_BAM_FILE)
                               .transformAndConcat(CREATE_READ_GROUP_INFOS)
-                              .index(ReadGroupInfo.GET_SAMPLE)
+                              .index(info -> info.getSample())
                               .asMap(),
-                          GET_BAM_FILES),
+                          infos -> infos.stream().map(info -> info.getBamFile()).collect(Collectors.toSet())),
                       createReadset)
                   .values())
               .uniqueIndex(BamFilesReadset.GET_READSET_ID);
