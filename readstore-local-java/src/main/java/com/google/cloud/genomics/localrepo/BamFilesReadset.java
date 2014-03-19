@@ -17,10 +17,7 @@ package com.google.cloud.genomics.localrepo;
 
 import com.google.cloud.genomics.localrepo.BamFile.IndexedBamFile;
 import com.google.cloud.genomics.localrepo.dto.Readset;
-import com.google.common.base.Function;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import com.google.common.collect.FluentIterable;
+import com.google.cloud.genomics.localrepo.util.Suppliers;
 
 import net.sf.picard.sam.SamFileHeaderMerger;
 import net.sf.samtools.SAMFileHeader;
@@ -28,64 +25,15 @@ import net.sf.samtools.SAMFileHeader.SortOrder;
 
 import org.joda.time.DateTimeUtils;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class BamFilesReadset {
-
-  private static final Comparator<Readset.FileData> FILE_URL_COMPARATOR =
-      comparatorFromFunction(
-          new Function<Readset.FileData, String>() {
-            @Override public String apply(Readset.FileData fileData) {
-              return fileData.getFileUri();
-            }
-          });
-
-  public static final Function<BamFilesReadset, Set<IndexedBamFile>> GET_BAM_FILES =
-      new Function<BamFilesReadset, Set<IndexedBamFile>>() {
-        @Override public Set<IndexedBamFile> apply(BamFilesReadset bamFile) {
-          return bamFile.getBamFiles();
-        }
-      };
-
-  public static final Function<BamFilesReadset, String> GET_DATASET_ID =
-      new Function<BamFilesReadset, String>() {
-        @Override public String apply(BamFilesReadset readset) {
-          return readset.getDatasetId();
-        }
-      };
-
-  public static final Function<BamFilesReadset, Readset> GET_READSET =
-      new Function<BamFilesReadset, Readset>() {
-        @Override public Readset apply(BamFilesReadset readset) {
-          return readset.getReadset();
-        }
-      };
-
-  public static final Function<BamFilesReadset, String> GET_READSET_ID =
-      new Function<BamFilesReadset, String>() {
-        @Override public String apply(BamFilesReadset readset) {
-          return readset.getReadsetId();
-        }
-      };
-
-  public static final Function<BamFilesReadset, String> GET_SAMPLE =
-      new Function<BamFilesReadset, String>() {
-        @Override public String apply(BamFilesReadset readset) {
-          return readset.getSample();
-        }
-      };
-
-  private static <X, Y extends Comparable<? super Y>> Comparator<X> comparatorFromFunction(
-      final Function<? super X, ? extends Y> accessor) {
-    return
-        new Comparator<X>() {
-          @Override public int compare(X lhs, X rhs) {
-            return accessor.apply(lhs).compareTo(accessor.apply(rhs));
-          }
-        };
-  }
 
   public static BamFilesReadset create(
       String readsetId,
@@ -100,29 +48,14 @@ public class BamFilesReadset {
   private final String readsetId;
   private final String sample;
 
-  private final Supplier<Readset> readset = Suppliers.memoize(
-      new Supplier<Readset>() {
-        @Override public Readset get() {
-          return Readset.create(
-              getReadsetId(),
-              getSample(),
-              getDatasetId(),
-              DateTimeUtils.currentTimeMillis(),
-              FluentIterable.from(getBamFiles())
-                  .transform(BamFile.GET_FILE_DATA)
-                  .toSortedList(FILE_URL_COMPARATOR));
-        }
-      });
+  private final Supplier<Readset> readset = Suppliers.memoize(() -> Readset.create(
+      getReadsetId(), getSample(), getDatasetId(), DateTimeUtils.currentTimeMillis(), getBamFiles()
+      .stream().map(BamFile::getFileData).collect(Collectors.toCollection(() -> new ArrayList<>(
+      new TreeSet<>(Comparator.comparing(Readset.FileData::getFileUri)))))));
 
-  private final Supplier<SAMFileHeader> header = Suppliers.memoize(
-      new Supplier<SAMFileHeader>() {
-        @Override public SAMFileHeader get() {
-          return new SamFileHeaderMerger(
-              SortOrder.coordinate,
-              FluentIterable.from(bamFiles).transform(BamFile.GET_HEADER).toList(),
-              true).getMergedHeader();
-        }
-      });
+  private final Supplier<SAMFileHeader> header = Suppliers.memoize(() -> new SamFileHeaderMerger(
+      SortOrder.coordinate, bamFiles.stream().map(BamFile::getHeader).collect(Collectors.toList()),
+      true).getMergedHeader());
 
   private BamFilesReadset(
       String readsetId,

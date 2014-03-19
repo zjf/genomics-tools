@@ -15,19 +15,15 @@ limitations under the License.
 */
 package com.google.cloud.genomics.localrepo.util;
 
-import java.util.Collection;
+import java.util.Map;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
-public final class Predicates {
+public final class Maps {
 
-  public static <X, Y> Predicate<X> compose(Predicate<Y> predicate, Function<? super X, Y> function) {
-    return com.google.common.base.Predicates.compose(predicate::test, function::apply)::apply;
+  public static <X, Y, Z> Map<X, Z> transformValues(Map<X, Y> fromMap,
+      Function<? super Y, Z> function) {
+    return com.google.common.collect.Maps.transformValues(fromMap, function::apply);
   }
 
-  public static <X> Predicate<X> in(Collection<X> collection) {
-    return com.google.common.base.Predicates.in(collection)::apply;
-  }
-
-  private Predicates() {}
+  private Maps() {}
 }

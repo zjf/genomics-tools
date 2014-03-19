@@ -87,19 +87,6 @@ public class DatasetDirectory {
         }
       };
 
-  private static final Function<Path, FluentIterable<Path>> FIND_FILES = dfs(
-      new Function<Path, Iterable<Path>>() {
-        @Override public Iterable<Path> apply(Path path) {
-          try {
-            return Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)
-                ? Files.newDirectoryStream(path)
-                : Collections.<Path>emptyList();
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-        }
-      });
-
   private static final FileSystem FILE_SYSTEM = FileSystems.getDefault();
 
   private static final Supplier<String> READSET_ID_GENERATOR =
@@ -184,7 +171,14 @@ public class DatasetDirectory {
                   .transformEntries(
                       Maps.transformValues(
                           FluentIterable.from(Collections.singletonList(getDirectory()))
-                              .transformAndConcat(FIND_FILES)
+                              .transformAndConcat(dfs(path -> {
+                                try {
+                                  return Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS) ? Files.newDirectoryStream(path)
+                                      : Collections.<Path>emptyList();
+                                } catch (Exception e) {
+                                  throw Throwables.propagate(e);
+                                }
+                              }))
                               .transform(path -> path.toFile())
                               .transformAndConcat(CREATE_BAM_FILE)
                               .transformAndConcat(CREATE_INDEXED_BAM_FILE)
@@ -194,7 +188,7 @@ public class DatasetDirectory {
                           infos -> infos.stream().map(info -> info.getBamFile()).collect(Collectors.toSet())),
                       createReadset)
                   .values())
-              .uniqueIndex(BamFilesReadset.GET_READSET_ID);
+              .uniqueIndex(BamFilesReadset::getReadsetId);
         }
       });
 

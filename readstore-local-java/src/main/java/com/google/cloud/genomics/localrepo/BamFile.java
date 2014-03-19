@@ -133,13 +133,6 @@ public class BamFile {
         }
       };
 
-  public static final Function<BamFile, Readset.FileData> GET_FILE_DATA =
-      new Function<BamFile, Readset.FileData>() {
-        @Override public Readset.FileData apply(BamFile bamFile) {
-          return bamFile.getFileData();
-        }
-      };
-
   static final Function<BamFile, SAMFileHeader> GET_HEADER =
       new Function<BamFile, SAMFileHeader>() {
         @Override public SAMFileHeader apply(BamFile bamFile) {
