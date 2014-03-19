@@ -1,4 +1,4 @@
-genomics-tools
+genomics-tools [![Build Status](https://travis-ci.org/GoogleCloudPlatform/genomics-tools.png?branch=master)](https://travis-ci.org/GoogleCloudPlatform/genomics-tools)
 ==============
 
 The projects in this repository are focused around the <a href="https://developers.google.com/genomics">Google Genomics API</a>.
