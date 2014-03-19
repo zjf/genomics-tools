@@ -20,9 +20,9 @@ import com.google.cloud.genomics.localrepo.dto.Readset;
 import com.google.cloud.genomics.localrepo.dto.SearchReadsRequest;
 import com.google.cloud.genomics.localrepo.dto.SearchReadsResponse;
 import com.google.cloud.genomics.localrepo.util.Predicates;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
@@ -41,12 +41,12 @@ public class Backend {
   }
 
   private static <X, Y> Map<X, Y> union(Stream<Map<X, Y>> maps) {
-    ImmutableMap.Builder<X, Y> union = ImmutableMap.builder();
+    Map<X, Y> union = new HashMap<>();
     for (
         Iterator<Map<X, Y>> iterator = maps.iterator();
         iterator.hasNext();
         union.putAll(iterator.next()));
-    return union.build();
+    return union;
   }
 
   private final Map<String, DatasetDirectory> datasets;
