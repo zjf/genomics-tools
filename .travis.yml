@@ -1,0 +1,4 @@
+language: java
+before_install: cd readstore-local-java
+jdk:
+  - oraclejdk8
