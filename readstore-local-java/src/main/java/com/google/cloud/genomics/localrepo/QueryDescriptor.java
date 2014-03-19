@@ -15,8 +15,6 @@ limitations under the License.
 */
 package com.google.cloud.genomics.localrepo;
 
-import com.google.common.base.Throwables;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -90,7 +88,7 @@ public final class QueryDescriptor implements Serializable {
       return (QueryDescriptor) new ObjectInputStream(
           new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(pageToken))).readObject();
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
     }
   }
 
@@ -131,7 +129,7 @@ public final class QueryDescriptor implements Serializable {
       new ObjectOutputStream(buffer).writeObject(this);
       return DatatypeConverter.printBase64Binary(buffer.toByteArray());
     } catch (Exception e) {
-      throw Throwables.propagate(e);
+      throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
     }
   }
 

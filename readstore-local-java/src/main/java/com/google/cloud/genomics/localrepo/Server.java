@@ -15,6 +15,12 @@ limitations under the License.
 */
 package com.google.cloud.genomics.localrepo;
 
+import org.codehaus.jackson.jaxrs.JacksonJaxbJsonProvider;
+import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
+import org.glassfish.jersey.server.ResourceConfig;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
@@ -23,12 +29,6 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import org.codehaus.jackson.jaxrs.JacksonJaxbJsonProvider;
-import org.glassfish.grizzly.http.server.HttpServer;
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
-import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
-import org.glassfish.jersey.server.ResourceConfig;
 
 public final class Server {
 
@@ -104,15 +104,12 @@ public final class Server {
   public static void main(String[] args) throws Exception {
     CommandLineArguments cmdLine = CommandLineArguments.parse(args);
     Optional<Integer> port = cmdLine.getPort();
-    builder()
-        .setPort(port.isPresent() ? port.get() : Builder.DEFAULT_PORT)
-        .setDatasets(cmdLine
-            .getDatasets()
-            .entrySet()
-            .stream()
-            .map(entry -> DatasetDirectory.create(entry.getKey(), entry.getValue()))
-            .collect(Collectors.toList()))
-        .build().start();
+    Builder builder = builder();
+    (port.isPresent() ? builder.setPort(port.get()) : builder)
+        .setDatasets(
+            cmdLine.getDatasets().entrySet().stream()
+                .map(entry -> DatasetDirectory.create(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList())).build().start();
     Thread.currentThread().join();
   }
 

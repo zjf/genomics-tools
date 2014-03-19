@@ -15,6 +15,19 @@ limitations under the License.
 */
 package com.google.cloud.genomics.localrepo;
 
+import com.google.cloud.genomics.localrepo.BamFile.IndexedBamFile;
+import com.google.cloud.genomics.localrepo.dto.Dataset;
+import com.google.cloud.genomics.localrepo.dto.Readset;
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import com.google.common.base.Throwables;
+import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Queues;
+
 import java.io.File;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -29,19 +42,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-
-import com.google.cloud.genomics.localrepo.BamFile.IndexedBamFile;
-import com.google.cloud.genomics.localrepo.dto.Dataset;
-import com.google.cloud.genomics.localrepo.dto.Readset;
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import com.google.common.base.Throwables;
-import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Queues;
 
 public class DatasetDirectory {
 

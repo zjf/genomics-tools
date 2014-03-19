@@ -22,10 +22,7 @@ import com.google.cloud.genomics.localrepo.dto.SearchReadsResponse;
 import com.google.cloud.genomics.localrepo.util.Functions;
 import com.google.cloud.genomics.localrepo.util.Maps;
 import com.google.cloud.genomics.localrepo.util.Predicates;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Ordering;
 import com.google.common.collect.PeekingIterator;
 
 import net.sf.samtools.SAMFileReader;
@@ -37,6 +34,7 @@ import net.sf.samtools.SAMRecordIterator;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -162,9 +160,9 @@ public class QueryEngine {
       Map<File, PeekingIterator<SAMRecordWithSkip>> iterators,
       final int end,
       Predicate<SAMRecord> readsetFilter) {
-    ImmutableList.Builder<Read> reads = ImmutableList.builder();
+    List<Read> reads = new ArrayList<>();
     for (Iterator<SAMRecordWithSkip> iterator = Iterators.limit(
-        Iterators.mergeSorted(iterators.values(), Ordering.<SAMRecordWithSkip>natural()), pageSize);
+        Iterators.mergeSorted(iterators.values(), Comparator.naturalOrder()), pageSize);
         iterator.hasNext();) {
       SAMRecord record = iterator.next().record;
       if (readsetFilter.test(record)) {
@@ -174,12 +172,12 @@ public class QueryEngine {
     Map<File, PeekingIterator<SAMRecordWithSkip>> nonEmptyIterators =
         Maps.filterValues(iterators, iterator -> iterator.hasNext());
     return SearchReadsResponse.create(
-        reads.build(),
+        reads,
         nonEmptyIterators.isEmpty()
             ? null
             : QueryDescriptor
                 .create(
-                    ImmutableMap.copyOf(Maps.transformValues(nonEmptyIterators,
+                    new HashMap<>(Maps.transformValues(nonEmptyIterators,
                         new Function<PeekingIterator<SAMRecordWithSkip>, QueryDescriptor.Start>() {
                           @Override
                           public QueryDescriptor.Start apply(
@@ -236,15 +234,16 @@ public class QueryEngine {
       abstract Y open(X key);
 
       final Z process(Iterable<X> keys) {
-        return process(keys.iterator(), ImmutableMap.<X, Y>builder());
+        return process(keys.iterator(), new HashMap<>());
       }
 
-      private Z process(Iterator<X> iterator, ImmutableMap.Builder<X, Y> map) {
+      private Z process(Iterator<X> iterator, Map<X, Y> map) {
         if (iterator.hasNext()) {
           X key = iterator.next();
           Y value = null;
           try {
-            return process(iterator, map.put(key, value = open(key)));
+            map.put(key, value = open(key));
+            return process(iterator, map);
           } finally {
             if (null != value) {
               try {
@@ -255,7 +254,7 @@ public class QueryEngine {
             }
           }
         }
-        return process(map.build());
+        return process(map);
       }
 
       abstract Z process(Map<X, Y> map);
@@ -328,8 +327,8 @@ public class QueryEngine {
           SearchReadsResponse process(Map<
               Map.Entry<Map.Entry<File, QueryDescriptor.Start>, SAMFileReader>,
               SAMRecordIterator> map) {
-            ImmutableMap.Builder<File, PeekingIterator<SAMRecordWithSkip>> iterators =
-                ImmutableMap.builder();
+            Map<File, PeekingIterator<SAMRecordWithSkip>> iterators =
+                new HashMap<>();
             for (Map.Entry<Map.Entry<Map.Entry<File, QueryDescriptor.Start>, SAMFileReader>,
                 SAMRecordIterator> entry : map.entrySet()) {
               iterators.put(entry.getKey().getKey().getKey(), Iterators.peekingIterator(partition(
@@ -338,7 +337,7 @@ public class QueryEngine {
                       && Objects.equals(lhs.getAlignmentStart(), rhs.getAlignmentStart()))
                   .map(ADD_SKIPS).flatMap(Function.identity()).iterator()));
             }
-            return searchReads(iterators.build(), end, readsetFilter);
+            return searchReads(iterators, end, readsetFilter);
           }
         }.process(map.entrySet());
       }
