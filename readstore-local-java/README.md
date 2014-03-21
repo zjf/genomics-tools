@@ -1,11 +1,7 @@
 readstore-local-java
 ==============
 
-<br/>
-
 ###Getting started  
-
-<br/>
 
 To use, first build the code using
 <a href="http://maven.apache.org/download.cgi">Apache Maven</a>:
@@ -13,13 +9,11 @@ To use, first build the code using
 cd readstore-local-java
 mvn package
 ```
-<br/>
 
 Once built, use the jar file to start a local server
 ```
 java -cp target/readstore-local-java-v1beta-jar-with-dependencies.jar com.google.cloud.genomics.localrepo.Server --dataset=testdata:testdata
 ```
-<br/>
 
 There are two command line flags available:
 * `--port=<portnum>`  
@@ -49,10 +43,8 @@ There are two command line flags available:
   `my_directory/my_subdirectory/foo.bam` and `my_directory/baz.bam` would be included
   into a dataset with ID `my_data`, But `my_directory/another_subdirectory/bar.bam`
   would be excluded, due to not having its sibbling *.bai* file.  
-<br/>
 
 Go to `http://localhost:<portnum>/datasets` to see your data.  
-<br/>
 
 ###Code layout
 Under active development - coming soon!
