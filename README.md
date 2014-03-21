@@ -11,6 +11,8 @@ Python client might be written. It uses
 <a href="https://developers.google.com/appengine/docs/python/gettingstartedpython27/introduction">Google App Engine</a>
 to deploy.
 
+* **client-r** provides a simple r script that transforms API query results into GAlignments.
+
 * **mapreduce-python** uses the <a href="https://developers.google.com/appengine/docs/python/dataprocessing/">MapReduce Python</a>
 feature of Google App Engine to do complex calculations over API data.
 
