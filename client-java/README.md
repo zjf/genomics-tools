@@ -21,10 +21,10 @@ java -jar target/genomics-tools-client-java-v1beta.jar auth
 
 * Once authenticated, you can then perform API queries like fetching readsets or reads:
 ```
-java -jar target/genomics-tools-client-java-v1beta.jar listreadsets --dataset_ids <dataset_id> --fields "readsets(id,name)"
+java -jar target/genomics-tools-client-java-v1beta.jar searchreadsets --dataset_ids <dataset_id> --fields "readsets(id,name)"
 ```
 ```
-java -jar target/genomics-tools-client-java-v1beta.jar listreads --readset_ids <readset_id> --sequence_name 1 --sequence_start 10000 --sequence_end 10000
+java -jar target/genomics-tools-client-java-v1beta.jar searchreads --readset_ids <readset_id> --sequence_name 1 --sequence_start 10000 --sequence_end 10000
 ```
 
 ###Code layout
