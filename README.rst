@@ -8,30 +8,24 @@ genomics-tools
 .. |Build Status| image:: https://travis-ci.org/GoogleCloudPlatform/genomics-tools.png?branch=master
 .. _Build Status: https://travis-ci.org/GoogleCloudPlatform/genomics-tools
 
-The projects in this repository are focused around the `Google Genomics API`_:
+The projects in this repository are focused around the `Google Genomics API
+<https://developers.google.com/genomics>`_:
 
-.. _Google Genomics API: https://developers.google.com/genomics
-
-:client-java:
+client-java:
     provides a command line interface for API queries, and demonstrates how a
     more complex Java client might be written.
-
-:client-python:
+client-python:
     provides an example web interface that depends on API queries, and
     demonstrates how a more complex Python client might be written. It uses
     `Google App Engine`_ to deploy.
-
-:client-r:
+client-r:
     provides a simple R script that transforms API query results into
     GAlignments.
-
-:mapreduce-python:
+mapreduce-python:
     uses the `MapReduce Python`_ feature of Google App Engine to do complex calculations over API data.
-
-:protobufs:
+protobufs:
     includes the protocol buffers used by the API. All client libraries, documentation, and output are auto generated from these files.
-
-:readstore-local-java:
+readstore-local-java:
     implements the Genomics API locally, reading its data from a local
     `BAM file`_.
 
@@ -43,7 +37,6 @@ Contributing changes
 --------------------
 
 See `CONTRIB.rst <CONTRIB.rst>`__.
-
 
 Licensing
 ---------

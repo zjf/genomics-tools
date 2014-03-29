@@ -49,20 +49,18 @@ Contributing A New Sample App
 
      {product}-{app-name}-{language}
 
-   :products: ``appengine``, ``compute``, ``storage``, ``bigquery``,
-              ``prediction``, ``cloudsql``
+   :product: ``appengine``, ``compute``, ``storage``, ``bigquery``,
+             ``prediction``, ``cloudsql``
 
    For example: ``appengine-guestbook-python``
 
-   For multi-product apps, concatenate the primary products, like this::
+   For multi-product apps, concatenate the primary products, like this
+   ``compute-appengine-demo-suite-python``.
 
-     compute-appengine-demo-suite-python
+   For multi-language apps, concatenate the primary languages like this
+   ``appengine-sockets-python-java-go``.
 
-   For multi-language apps, concatenate the primary languages like this::
-
-     appengine-sockets-python-java-go
-
-#. Clone the `README.md`, `CONTRIB.md` and `LICENSE` files from the
+#. Clone the ``README.md``, ``CONTRIB.md`` and ``LICENSE`` files from the
    `GoogleCloudPlatform/Template` repo.
 #. Ensure that your code adheres to the existing style in the sample to which
    you are contributing. Refer to the `Google Cloud Platform Samples Style
