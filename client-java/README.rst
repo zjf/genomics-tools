@@ -13,15 +13,15 @@ command line.
     mvn package
 
 * Then, follow the `authentication instructions`_ to generate a valid
-``client_secrets.json`` file.
+  ``client_secrets.json`` file.
 
 * Move the ``client_secrets.json`` file into the target directory and start the
-authentication process::
+  authentication process::
 
     java -jar target/genomics-tools-client-java-v1beta.jar auth
 
 * Once authenticated, you can then perform API queries like fetching readsets or
-reads::
+  reads::
 
     java -jar target/genomics-tools-client-java-v1beta.jar searchreadsets --dataset_ids <dataset_id> --fields "readsets(id,name)"
 
@@ -39,7 +39,7 @@ Most of the Java code is a generated client library. This includes everything un
 
 CommandLine.java:
     defines all of the possible command line arguments using the `args4j library
-<http://args4j.kohsuke.org/index.html>`_.
+    <http://args4j.kohsuke.org/index.html>`_.
 
 GenomicsSample.java:
     provides the bulk of the logic. In its ``main`` method, the user's request is
