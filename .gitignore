@@ -6,3 +6,4 @@ client-java/target
 benchmarker-java/target
 readstore-local-java/target
 /.project
+.pydevproject
