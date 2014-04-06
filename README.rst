@@ -11,6 +11,9 @@ genomics-tools
 The projects in this repository are focused around the `Google Genomics API
 <https://developers.google.com/genomics>`_:
 
+client-go:
+    shows how easy it can be to call into the API with the Go programming
+    language.
 client-java:
     provides a command line interface for API queries, and demonstrates how a
     more complex Java client might be written.
