@@ -29,7 +29,7 @@ package com.google.api.services.genomics.model;
 public final class Readset extends com.google.api.client.json.GenericJson {
 
   /**
-   * The date this readset was created.
+   * The date this readset was created in milliseconds from the epoch.
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key @com.google.api.client.json.JsonString
@@ -78,7 +78,7 @@ public final class Readset extends com.google.api.client.json.GenericJson {
   private java.math.BigInteger readCount;
 
   /**
-   * The date this readset was created.
+   * The date this readset was created in milliseconds from the epoch.
    * @return value or {@code null} for none
    */
   public java.lang.Long getCreated() {
@@ -86,7 +86,7 @@ public final class Readset extends com.google.api.client.json.GenericJson {
   }
 
   /**
-   * The date this readset was created.
+   * The date this readset was created in milliseconds from the epoch.
    * @param created created or {@code null} for none
    */
   public Readset setCreated(java.lang.Long created) {

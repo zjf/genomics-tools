@@ -33,7 +33,14 @@ public final class SearchReadsetsRequest extends com.google.api.client.json.Gene
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private java.util.List<String> datasetIds;
+  private java.util.List<java.lang.String> datasetIds;
+
+  /**
+   * Only return readsets with names matching this substring.
+   * The value may be {@code null}.
+   */
+  @com.google.api.client.util.Key
+  private java.lang.String name;
 
   /**
    * The continuation token, which is used to page through large result sets. To get the next page
@@ -41,13 +48,13 @@ public final class SearchReadsetsRequest extends com.google.api.client.json.Gene
    * The value may be {@code null}.
    */
   @com.google.api.client.util.Key
-  private String pageToken;
+  private java.lang.String pageToken;
 
   /**
    * Restricts this query to readsets within the given datasets. At least one ID must be provided.
    * @return value or {@code null} for none
    */
-  public java.util.List<String> getDatasetIds() {
+  public java.util.List<java.lang.String> getDatasetIds() {
     return datasetIds;
   }
 
@@ -55,8 +62,25 @@ public final class SearchReadsetsRequest extends com.google.api.client.json.Gene
    * Restricts this query to readsets within the given datasets. At least one ID must be provided.
    * @param datasetIds datasetIds or {@code null} for none
    */
-  public SearchReadsetsRequest setDatasetIds(java.util.List<String> datasetIds) {
+  public SearchReadsetsRequest setDatasetIds(java.util.List<java.lang.String> datasetIds) {
     this.datasetIds = datasetIds;
+    return this;
+  }
+
+  /**
+   * Only return readsets with names matching this substring.
+   * @return value or {@code null} for none
+   */
+  public java.lang.String getName() {
+    return name;
+  }
+
+  /**
+   * Only return readsets with names matching this substring.
+   * @param name name or {@code null} for none
+   */
+  public SearchReadsetsRequest setName(java.lang.String name) {
+    this.name = name;
     return this;
   }
 
@@ -65,7 +89,7 @@ public final class SearchReadsetsRequest extends com.google.api.client.json.Gene
    * of results, set this parameter to the value of "nextPageToken" from the previous response.
    * @return value or {@code null} for none
    */
-  public String getPageToken() {
+  public java.lang.String getPageToken() {
     return pageToken;
   }
 
@@ -74,7 +98,7 @@ public final class SearchReadsetsRequest extends com.google.api.client.json.Gene
    * of results, set this parameter to the value of "nextPageToken" from the previous response.
    * @param pageToken pageToken or {@code null} for none
    */
-  public SearchReadsetsRequest setPageToken(String pageToken) {
+  public SearchReadsetsRequest setPageToken(java.lang.String pageToken) {
     this.pageToken = pageToken;
     return this;
   }
