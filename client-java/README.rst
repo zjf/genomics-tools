@@ -15,17 +15,15 @@ command line.
 * Then, follow the `authentication instructions`_ to generate a valid
   ``client_secrets.json`` file.
 
-* Move the ``client_secrets.json`` file into the target directory and start the
-  authentication process::
+* Move the ``client_secrets.json`` file into the client-java directory.
+(Authentication will take place the first time you make an API call.)
 
-    java -jar target/genomics-tools-client-java-v1beta.jar auth
-
-* Once authenticated, you can then perform API queries like fetching readsets or
+* You can then perform API queries like fetching readsets or
   reads::
 
-    java -jar target/genomics-tools-client-java-v1beta.jar searchreadsets --dataset_ids <dataset_id> --fields "readsets(id,name)"
+    java -jar target/genomics-tools-client-java-v1beta.jar searchreadsets --dataset_ids 376902546192 --fields "readsets(id,name)"
 
-    java -jar target/genomics-tools-client-java-v1beta.jar searchreads --readset_ids <readset_id> --sequence_name 1 --sequence_start 10000 --sequence_end 10000
+    java -jar target/genomics-tools-client-java-v1beta.jar searchreads --readset_ids "CJDmkYn8ChCh4IH4hOf4gacB" --sequence_name 1 --sequence_start 10000 --sequence_end 10000
 
 .. _Google Genomics API: https://developers.google.com/genomics
 .. _Apache Maven: http://maven.apache.org/download.cgi
