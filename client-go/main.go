@@ -314,7 +314,7 @@ func main() {
 	baseApi.NextPageToken = ""
 	for i := 1; i <= 2; i++ {
 		reads, err := baseApi.ReadsSearch([]string{}, readsetIds,
-			sequenceName, 1, ^uint64(0));
+			sequenceName, 1, ^uint64(0))
 		if err != nil {
 			log.Fatal(err)
 		}
