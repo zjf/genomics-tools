@@ -18,6 +18,8 @@ setup <- function(clientId="...googleusercontent.com", clientSecret) {
   install.packages("rjson")
   install.packages("devtools")
   install.packages("httr")
+  install.packages("httpuv")
+  install.packages("jsonlite")
       
   # Bioconductor packages
   source("http://bioconductor.org/biocLite.R")
